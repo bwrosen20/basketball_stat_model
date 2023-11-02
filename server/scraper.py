@@ -264,7 +264,7 @@ with app.app_context():
 
 
                         player_game = PlayerGame(
-                            # 'minutes': player.select('.right')[0].text,
+                            minutes= int(player.select('.right')[0].text.replace(":","")),
                             # 'fg': player.select('.right')[1].text,
                             # 'fga': player.select('.right')[2].text,
                             # 'fg_pct': player.select('.right')[3].text,
@@ -292,8 +292,8 @@ with app.app_context():
                         db.session.add(player_game)
                         db.session.commit()
 
-                        # player["tsp"]=away_players_advanced_data[index].select('.right')[1].text
-                        # player["efg"]=away_players_advanced_data[index].select('.right')[2].text
+                        player["tsp"]=float(away_players_advanced_data[index].select('.right')[1].text)
+                        player["efg"]=float(away_players_advanced_data[index].select('.right')[2].text)
                         # player["3PAr"]=away_players_advanced_data[index].select('.right')[3].text
                         # player["FTr"]=away_players_advanced_data[index].select('.right')[4].text
                         # player["ORBP"]=away_players_advanced_data[index].select('.right')[5].text
@@ -304,9 +304,9 @@ with app.app_context():
                         # player["BLKP"]=away_players_advanced_data[index].select('.right')[10].text
                         # player["TOVP"]=away_players_advanced_data[index].select('.right')[11].text
                         # player["USGP"]=away_players_advanced_data[index].select('.right')[12].text
-                        # player["ORtg"]=away_players_advanced_data[index].select('.right')[13].text
-                        # player["DRTg"]=away_players_advanced_data[index].select('.right')[14].text
-                        # player["BPM"]=away_players_advanced_data[index].select('.right')[15].text
+                        player["ORtg"]=int(away_players_advanced_data[index].select('.right')[13].text)
+                        player["DRTg"]=int(away_players_advanced_data[index].select('.right')[14].text)
+                        player["BPM"]=float(away_players_advanced_data[index].select('.right')[15].text)
 
                 for index, home_player in enumerate(home_players_data):
                     if len(home_player.select('.right'))>1:
@@ -323,7 +323,7 @@ with app.app_context():
 
 
                         player_game = PlayerGame(
-                            # 'minutes': home_player.select('.right')[0].text,
+                            minutes= int(home_player.select('.right')[0].text.replace(":","")),
                             # 'fg': home_player.select('.right')[1].text,
                             # 'fga': home_player.select('.right')[2].text,
                             # 'fg_pct': home_player.select('.right')[3].text,
@@ -351,8 +351,8 @@ with app.app_context():
                         db.session.add(player_game)
                         db.session.commit()
 
-                        # player["tsp"]=home_players_advanced_data[index].select('.right')[1].text
-                        # player["efg"]=home_players_advanced_data[index].select('.right')[2].text
+                        player["tsp"]=float(home_players_advanced_data[index].select('.right')[1].text)
+                        player["efg"]=float(home_players_advanced_data[index].select('.right')[2].text)
                         # player["tPAr"]=home_players_advanced_data[index].select('.right')[3].text
                         # player["FTr"]=home_players_advanced_data[index].select('.right')[4].text
                         # player["ORBP"]=home_players_advanced_data[index].select('.right')[5].text
@@ -363,9 +363,9 @@ with app.app_context():
                         # player["BLKP"]=home_players_advanced_data[index].select('.right')[10].text
                         # player["TOVP"]=home_players_advanced_data[index].select('.right')[11].text
                         # player["USGP"]=home_players_advanced_data[index].select('.right')[12].text
-                        # player["ORtg"]=home_players_advanced_data[index].select('.right')[13].text
-                        # player["DRTg"]=home_players_advanced_data[index].select('.right')[14].text
-                        # player["BPM"]=home_players_advanced_data[index].select('.right')[15].text
+                        player["ORtg"]=int(home_players_advanced_data[index].select('.right')[13].text)
+                        player["DRTg"]=int(home_players_advanced_data[index].select('.right')[14].text)
+                        player["BPM"]=float(home_players_advanced_data[index].select('.right')[15].text)
 
 
                 print(date)
