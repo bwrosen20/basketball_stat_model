@@ -248,6 +248,7 @@ with app.app_context():
                 home_players = []
 
                 for index, player in enumerate(away_players_data):
+                    
                     if len(player.select('.right'))>1:
                         played = True
                     else:
@@ -284,29 +285,29 @@ with app.app_context():
                             # 'fouls': player.select('.right')[17].text,
                             points= int(player.select('.right')[18].text),
                             # 'plus_minus': player.select('.right')[19].text
-                            home= False
+                            home= False,
+                            tsp= 0.00 if (away_players_advanced_data[index].select('.right')[1].text=="") else float(away_players_advanced_data[index].select('.right')[1].text),
+                            eft= 0.00 if (away_players_advanced_data[index].select('.right')[2].text=="") else float(away_players_advanced_data[index].select('.right')[2].text),
+                            # player["3PAr"]=away_players_advanced_data[index].select('.right')[3].text
+                            # player["FTr"]=away_players_advanced_data[index].select('.right')[4].text
+                            # player["ORBP"]=away_players_advanced_data[index].select('.right')[5].text
+                            # player["DRBP"]=away_players_advanced_data[index].select('.right')[6].text
+                            # player["TRBP"]=away_players_advanced_data[index].select('.right')[7].text
+                            # player["ASTP"]=away_players_advanced_data[index].select('.right')[8].text
+                            # player["STLP"]=away_players_advanced_data[index].select('.right')[9].text
+                            # player["BLKP"]=away_players_advanced_data[index].select('.right')[10].text
+                            # player["TOVP"]=away_players_advanced_data[index].select('.right')[11].text
+                            # player["USGP"]=away_players_advanced_data[index].select('.right')[12].text
+                            ORtg=0 if (away_players_advanced_data[index].select('.right')[13].text=="") else int(away_players_advanced_data[index].select('.right')[13].text),
+                            DRTg=0 if (away_players_advanced_data[index].select('.right')[14].text=="") else int(away_players_advanced_data[index].select('.right')[14].text),
+                            # BPM=0.00 if (away_players_advanced_data[index].select('.right')[15].text=="") else float(away_players_advanced_data[index].select('.right')[15].text)
                         )
 
                         player_game.player = assoc_player
                         player_game.game = match
                         db.session.add(player_game)
                         db.session.commit()
-
-                        player["tsp"]=float(away_players_advanced_data[index].select('.right')[1].text)
-                        player["efg"]=float(away_players_advanced_data[index].select('.right')[2].text)
-                        # player["3PAr"]=away_players_advanced_data[index].select('.right')[3].text
-                        # player["FTr"]=away_players_advanced_data[index].select('.right')[4].text
-                        # player["ORBP"]=away_players_advanced_data[index].select('.right')[5].text
-                        # player["DRBP"]=away_players_advanced_data[index].select('.right')[6].text
-                        # player["TRBP"]=away_players_advanced_data[index].select('.right')[7].text
-                        # player["ASTP"]=away_players_advanced_data[index].select('.right')[8].text
-                        # player["STLP"]=away_players_advanced_data[index].select('.right')[9].text
-                        # player["BLKP"]=away_players_advanced_data[index].select('.right')[10].text
-                        # player["TOVP"]=away_players_advanced_data[index].select('.right')[11].text
-                        # player["USGP"]=away_players_advanced_data[index].select('.right')[12].text
-                        player["ORtg"]=int(away_players_advanced_data[index].select('.right')[13].text)
-                        player["DRTg"]=int(away_players_advanced_data[index].select('.right')[14].text)
-                        player["BPM"]=float(away_players_advanced_data[index].select('.right')[15].text)
+                       
 
                 for index, home_player in enumerate(home_players_data):
                     if len(home_player.select('.right'))>1:
@@ -343,30 +344,28 @@ with app.app_context():
                             # 'fouls': home_player.select('.right')[17].text,
                             points= int(home_player.select('.right')[18].text),
                             # 'plus_minus': home_player.select('.right')[19].text
-                            home= True
+                            home= True,
+                            tsp= 0.00 if (home_players_advanced_data[index].select('.right')[1].text=="") else float(home_players_advanced_data[index].select('.right')[1].text),
+                            eft= 0.00 if (home_players_advanced_data[index].select('.right')[2].text=="") else float(home_players_advanced_data[index].select('.right')[2].text),
+                            # player["tPAr"]=home_players_advanced_data[index].select('.right')[3].text
+                            # player["FTr"]=home_players_advanced_data[index].select('.right')[4].text
+                            # player["ORBP"]=home_players_advanced_data[index].select('.right')[5].text
+                            # player["DRBP"]=home_players_advanced_data[index].select('.right')[6].text
+                            # player["TRBP"]=home_players_advanced_data[index].select('.right')[7].text
+                            # player["ASTP"]=home_players_advanced_data[index].select('.right')[8].text
+                            # player["STLP"]=home_players_advanced_data[index].select('.right')[9].text
+                            # player["BLKP"]=home_players_advanced_data[index].select('.right')[10].text
+                            # player["TOVP"]=home_players_advanced_data[index].select('.right')[11].text
+                            # player["USGP"]=home_players_advanced_data[index].select('.right')[12].text
+                            ORtg=0 if (home_players_advanced_data[index].select('.right')[13].text=="") else int(home_players_advanced_data[index].select('.right')[13].text),
+                            DRTg=0 if (home_players_advanced_data[index].select('.right')[14].text=="") else int(home_players_advanced_data[index].select('.right')[14].text),
+                            # BPM=0.00 if (home_players_advanced_data[index].select('.right')[15].text=="") else float(home_players_advanced_data[index].select('.right')[15].text)
                         )
 
                         player_game.player = assoc_player
                         player_game.game = match
                         db.session.add(player_game)
                         db.session.commit()
-
-                        player["tsp"]=float(home_players_advanced_data[index].select('.right')[1].text)
-                        player["efg"]=float(home_players_advanced_data[index].select('.right')[2].text)
-                        # player["tPAr"]=home_players_advanced_data[index].select('.right')[3].text
-                        # player["FTr"]=home_players_advanced_data[index].select('.right')[4].text
-                        # player["ORBP"]=home_players_advanced_data[index].select('.right')[5].text
-                        # player["DRBP"]=home_players_advanced_data[index].select('.right')[6].text
-                        # player["TRBP"]=home_players_advanced_data[index].select('.right')[7].text
-                        # player["ASTP"]=home_players_advanced_data[index].select('.right')[8].text
-                        # player["STLP"]=home_players_advanced_data[index].select('.right')[9].text
-                        # player["BLKP"]=home_players_advanced_data[index].select('.right')[10].text
-                        # player["TOVP"]=home_players_advanced_data[index].select('.right')[11].text
-                        # player["USGP"]=home_players_advanced_data[index].select('.right')[12].text
-                        player["ORtg"]=int(home_players_advanced_data[index].select('.right')[13].text)
-                        player["DRTg"]=int(home_players_advanced_data[index].select('.right')[14].text)
-                        player["BPM"]=float(home_players_advanced_data[index].select('.right')[15].text)
-
 
                 print(date)
                 time.sleep(3.2)
