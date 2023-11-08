@@ -2,6 +2,7 @@ from app import *
 from statistics import mean,mode
 from bs4 import BeautifulSoup
 from datetime import datetime, date
+from operator import itemgetter
 import time
 import requests
 import ipdb
@@ -30,14 +31,14 @@ with app.app_context():
 
     monthly_games = schedule.select('tbody')[0].select('tr')
 
-    # current_date = date.today()
+    current_date = date.today()
 
-    current_date = datetime(2023,11,6)
+    # current_date = datetime(2023,11,6)
 
 
     todays_games = []
     for game in monthly_games:
-        date = datetime.strptime(game.select('th')[0].text,"%a, %b %d, %Y")
+        date = datetime.strptime(game.select('th')[0].text,"%a, %b %d, %Y").date()
         if date == current_date:
             game_data = {}
             game_data["home"] = game.select('td')[3].text
@@ -112,6 +113,8 @@ with app.app_context():
             name = row.select('.sportsbook-row-name')[0].text
             if name.endswith(" "):
                 name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
             if name in odds_dict:
                 line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
                 odds_dict[name]["points"] = line
@@ -128,6 +131,8 @@ with app.app_context():
             name = row.select('.sportsbook-row-name')[0].text
             if name.endswith(" "):
                 name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
             if name in odds_dict:
                 line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
                 odds_dict[name]["assists"] = line
@@ -144,6 +149,8 @@ with app.app_context():
             name = row.select('.sportsbook-row-name')[0].text
             if name.endswith(" "):
                 name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
             if name in odds_dict:
                 line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
                 odds_dict[name]["rebounds"] = line
@@ -159,11 +166,19 @@ with app.app_context():
 
     #new_odds_dict is a dicitonary of all today's props
 
+    bets = []
+
+   
+
     for team_player_name, team_player_odds in new_odds_dict.items():
 
         player_name = team_player_name
+        print(player_name)
         #collect my own data about every game they've played in
-        current_player = Player.query.filter(Player.name==player_name).first()
+        if player_name == "Cameron Thomas":
+            current_player = Player.query.filter(Player.name=="Cam Thomas").first()
+        else:
+            current_player = Player.query.filter(Player.name==player_name).first()
         games = current_player.games
 
         last_game = games[-1]
@@ -174,7 +189,7 @@ with app.app_context():
             player_team = last_game.game.visitor
 
 
-        game = [game for game in todays_games if game["home"]==player_team or game["away"]==[player_team]][0]
+        game = [game for game in todays_games if game["home"]==player_team or game["away"]==player_team][0]
 
         if game["home"] == player_team:
             player_home_or_away = True
@@ -215,14 +230,15 @@ with app.app_context():
                 #make a new injured list with only starters
                 
                 for injured_player in (injured_list[player_team]):
-                    injured_player_games = Player.query.filter(Player.name==injured_player).first().games[-3:]
-                    minutes = mean([game.minutes for game in injured_player_games])
-                    if minutes > 2000:
-                        if injured_player in team_player_names and this_current_player in games_with_injury:
-                            games_with_injury.remove(this_current_player)
+                    if len(Player.query.filter(Player.name==injured_player).all())>0:
+                        injured_player_games = Player.query.filter(Player.name==injured_player).first().games[-3:]
+                        minutes = mean([game.minutes for game in injured_player_games])
+                        if minutes > 2000:
+                            if injured_player in team_player_names and this_current_player in games_with_injury:
+                                games_with_injury.remove(this_current_player)
 
 
-    
+        
     
         #latest 5 games at time
         games_at_time = [game for game in games if game.game.date.time()==game_time][-3:]
@@ -260,11 +276,12 @@ with app.app_context():
                 
                 for injured_player in (injured_list[other_team]):
                     if Player.query.filter(Player.name==injured_player):
-                        injured_player_games = Player.query.filter(Player.name==injured_player).first().games[-5:]
-                        minutes = mean([game.minutes for game in injured_player_games])
-                        if minutes > 2000:
-                            if injured_player in opponent_player_names and this_current_player in games_with_opp_injury:
-                                games_with_opp_injury.remove(this_current_player)
+                        if len(Player.query.filter(Player.name==injured_player).all())>0:
+                            injured_player_games = Player.query.filter(Player.name==injured_player).first().games[-5:]
+                            minutes = mean([game.minutes for game in injured_player_games])
+                            if minutes > 2000:
+                                if injured_player in opponent_player_names and this_current_player in games_with_opp_injury:
+                                    games_with_opp_injury.remove(this_current_player)
     
 
 
@@ -291,18 +308,94 @@ with app.app_context():
 
         uniq_game_list = [game for game in uniq_game_list if (minutes-minutes*.15 <= game.minutes <=minutes+minutes*.9)]
 
-        assists_list = [game.assists for game in uniq_game_list]
-        points_list = [game.points for game in uniq_game_list]
-        trb_list = [game.trb for game in uniq_game_list]
+        if len(uniq_game_list) > 0:
 
-        assists_factor = mean(assists_list)
-        points_factor = mean(points_list)
-        trb_factor = mean(trb_list)
+            assists_list = [game.assists for game in uniq_game_list]
+            points_list = [game.points for game in uniq_game_list]
+            trb_list = [game.trb for game in uniq_game_list]
 
-        assists_predict = 0.6*assists_factor+0.4*assists_similar
-        points_predict = 0.6*points_factor+0.4*points_similar
-        trb_predict = 0.6*trb_factor+0.4*trb_similar
+            assists_factor = mean(assists_list)
+            points_factor = mean(points_list)
+            trb_factor = mean(trb_list)
 
-        ipdb.set_trace()
+            assists_predict = 0.6*assists_factor+0.4*assists_similar
+            points_predict = 0.6*points_factor+0.4*points_similar
+            trb_predict = 0.6*trb_factor+0.4*trb_similar
 
-        print("hi")
+            assist_bet = "none"
+            trb_bet = "none"
+            points_bet = "none"
+
+
+            if "assists" in team_player_odds:
+                assist_diff = assists_predict - team_player_odds["assists"]
+                if assist_diff < 0:
+                    assist_bet = "Under"
+                else:
+                    assist_bet = "Over"
+                assist_diff_abs = abs(assist_diff)
+                assist_perc = abs(assists_predict-team_player_odds["assists"])/team_player_odds["assists"]
+                assists_dict = {"name": player_name, 
+                            "prop":"assists",
+                            "line": team_player_odds["assists"],
+                            "projected": assists_predict,
+                            "diff": assist_diff_abs,
+                            "bet": assist_bet}
+
+                if assists_dict["diff"] > 2:
+                    bets.append(assists_dict)
+
+
+                
+            if "rebounds" in team_player_odds:
+                trb_diff = trb_predict - team_player_odds["rebounds"]
+                if trb_diff < 0:
+                    trb_bet = "Under"
+                else:
+                    trb_bet = "Over"
+                trb_diff_abs = abs(trb_diff)
+                trb_perc = abs(trb_predict-team_player_odds["rebounds"])/team_player_odds["rebounds"]
+                trb_dict = {"name": player_name, 
+                            "prop": "rebounds",
+                            "line": team_player_odds["rebounds"],
+                            "projected": trb_predict,
+                            "diff": trb_diff_abs,
+                            "bet": trb_bet}
+
+            if trb_dict["diff"] > 3:
+                bets.append(trb_dict)
+
+
+            if "points" in team_player_odds:
+                points_diff = points_predict - team_player_odds["points"]
+                if points_diff < 0:
+                    points_bet = "Under"
+                else:
+                    points_bet = "Over"
+
+
+                points_diff_abs = abs(points_diff)
+                points_perc = abs(points_predict-team_player_odds["points"])/team_player_odds["points"]
+            
+                points_dict = {"name": player_name, 
+                            "prop": "points",
+                            "line": team_player_odds["points"],
+                            "projected": points_predict,
+                            "diff": points_diff_abs,
+                            "bet": points_bet}
+
+                if points_dict["diff"] > 5:
+                    bets.append(points_dict)
+
+    sorted_bets = sorted(bets,key=itemgetter('diff'))
+           
+    for item in sorted_bets:
+        name = item["name"]
+        prop = item["prop"]
+        line = item["line"]
+        projected = item["projected"]
+        bet = item["bet"]
+        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+
+        
+
