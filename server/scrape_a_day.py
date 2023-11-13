@@ -12,12 +12,13 @@ import time
 import requests
 import ipdb
 
+#this program will download all game data from a specific day
 
 
 with app.app_context():
     
-
-    todays_date = datetime(2023,11,8)
+    #input the correct date and correct url then run program
+    todays_date = datetime(2023,11,12)
             
     # headers = {'user-agent': 'my-app/0.0.1'}
     html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_2024_games-november.html", headers={'User-Agent':"Mozilla/5.0"})
@@ -27,8 +28,7 @@ with app.app_context():
     doc = BeautifulSoup(html.text, 'html.parser')
     rows = doc.find_all('tr')
 
-    #rows.pop(0:24)
-    rows = rows[24:]
+    rows.pop(0)
 
     games = []
 
@@ -293,6 +293,7 @@ with app.app_context():
                         ORtg=0 if (away_players_advanced_data[index].select('.right')[13].text=="") else int(away_players_advanced_data[index].select('.right')[13].text),
                         DRTg=0 if (away_players_advanced_data[index].select('.right')[14].text=="") else int(away_players_advanced_data[index].select('.right')[14].text),
                         # BPM=0.00 if (away_players_advanced_data[index].select('.right')[15].text=="") else float(away_players_advanced_data[index].select('.right')[15].text)
+                        team=away
                     )
 
                     player_game.player = assoc_player
@@ -354,6 +355,7 @@ with app.app_context():
                         ORtg=0 if (home_players_advanced_data[index].select('.right')[13].text=="") else int(home_players_advanced_data[index].select('.right')[13].text),
                         DRTg=0 if (home_players_advanced_data[index].select('.right')[14].text=="") else int(home_players_advanced_data[index].select('.right')[14].text),
                         # BPM=0.00 if (home_players_advanced_data[index].select('.right')[15].text=="") else float(home_players_advanced_data[index].select('.right')[15].text)
+                        team=home
                     )
 
                     player_game.player = assoc_player

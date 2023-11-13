@@ -16,31 +16,22 @@ import ipdb
 
 with app.app_context():
     
-    # years = ["2022","2023","2024"]
+    years = ["2022","2023","2024"]
 
-    # for year in years:
-    #     months = ["october","november","december","january","february","march","april","may","june"]
-    #     for month in months:
-            # prize_picks_url = 'http://actionnetwork.com/nba/props/assists'
-
-            # prize_picks = requests.get(prize_picks_url, headers={'User-Agent':"Mozilla/5.0"})
-
-            # prize = BeautifulSoup(prize_picks.text, 'html.parser')
-
-            # ipdb.set_trace()
-
+    for year in years:
+        months = ["october","november","december","january","february","march","april","may","june"]
+        for month in months:
 
             
             # headers = {'user-agent': 'my-app/0.0.1'}
-            html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_2024_games-november.html", headers={'User-Agent':"Mozilla/5.0"})
+            html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_{year}_games-{month}.html", headers={'User-Agent':"Mozilla/5.0"})
             # date = html.select('div.ScheduleDay_sd_GFE_w')[0]
 
 
             doc = BeautifulSoup(html.text, 'html.parser')
             rows = doc.find_all('tr')
 
-            #rows.pop(0:24)
-            rows = rows[24:]
+            rows.pop(0)
 
             games = []
 
@@ -374,8 +365,8 @@ with app.app_context():
                 print(date)
                 time.sleep(3.2)
 
-        #     time.sleep(3.2)
+            time.sleep(3.2)
         
-        # time.sleep(3.2)
+        time.sleep(3.2)
 
-    # print("Done")
+    print("Done")

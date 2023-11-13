@@ -38,6 +38,7 @@ class Player(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
+    position = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
@@ -89,6 +90,7 @@ class PlayerGame(db.Model, SerializerMixin):
     DRTg = db.Column(db.Integer)
     BPM = db.Column(db.Float)
     home = db.Column(db.Boolean)
+    team = db.Column(db.String)
 
     player_id = db.Column('player_id',db.Integer, db.ForeignKey('player.id'))
     game_id = db.Column('game_id',db.Integer, db.ForeignKey('game.id'))
