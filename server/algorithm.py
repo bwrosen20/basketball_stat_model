@@ -53,12 +53,15 @@ with app.app_context():
 
 
     todays_games = []
+    list_of_teams = []
     for game in monthly_games:
         date = datetime.strptime(game.select('th')[0].text,"%a, %b %d, %Y").date()
         if date == current_date:
             game_data = {}
             game_data["home"] = game.select('td')[3].text
             game_data["away"] = game.select('td')[1].text
+            list_of_teams.append(game.select('td')[3].text)
+            list_of_teams.append(game.select('td')[1].text)
             my_time = game.select('td')[0].text
 
             empty_time = my_time.replace('p','').replace('a','').replace(":","")
@@ -654,9 +657,13 @@ with app.app_context():
         print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
 
     print(f"Double Doubles: {double_doubles}")
-    print(f"Triple Doubles: {triple_doubles}")
+    print(f"Triple Doubles: {triple_doubles}\n")
 
-    print(injured_list)
+    print("Injuries:")
+
+    for team,injuries in injured_list.items():
+        if team in list_of_teams:
+            print(f"{team}: {injuries}")
 
             
 
