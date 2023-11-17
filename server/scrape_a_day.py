@@ -18,7 +18,7 @@ import ipdb
 with app.app_context():
     
     #input the correct date and correct url then run program
-    todays_date = datetime(2023,11,15)
+    todays_date = datetime(2023,11,16)
             
     # headers = {'user-agent': 'my-app/0.0.1'}
     html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_2024_games-november.html", headers={'User-Agent':"Mozilla/5.0"})
@@ -248,12 +248,12 @@ with app.app_context():
                 if played:  
 
                     name = unidecode(player.select('th a')[0].text)
-                    if name=="Nic Claxton":
-                        assoc_player = Player.query.filter(Player.name=="Nicolas Claxton")
-                    elif name=="Cam Thomas":
-                        assoc_player = Player.query.filter(Player.name=="Cameron Thomas")
-                    elif (name in [person.name for person in Player.query.all()]):
+                    if (name in [person.name for person in Player.query.all()]):
                         assoc_player = Player.query.filter(Player.name == name).first()
+                    elif name=="Nic Claxton":
+                        assoc_player = Player.query.filter(Player.name=="Nicolas Claxton").first()
+                    elif name=="Cam Thomas":
+                        assoc_player = Player.query.filter(Player.name=="Cameron Thomas").first()
                     else:
                         assoc_player = Player(name=name)
                         db.session.add(assoc_player)
@@ -316,6 +316,10 @@ with app.app_context():
                     name = unidecode(home_player.select('th a')[0].text)
                     if (name in [person.name for person in Player.query.all()]):
                         assoc_player = Player.query.filter(Player.name == name).first()
+                    elif name=="Nic Claxton":
+                        assoc_player = Player.query.filter(Player.name=="Nicolas Claxton").first()
+                    elif name=="Cam Thomas":
+                        assoc_player = Player.query.filter(Player.name=="Cameron Thomas").first()
                     else:
                         assoc_player = Player(name=name)
                         db.session.add(assoc_player)

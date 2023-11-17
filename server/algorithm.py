@@ -13,7 +13,9 @@ with app.app_context():
 
 
     #set current date to todays date and run the algorithm to see projections
-    current_date = datetime(2023,11,16).date()
+    current_date = datetime(2023,11,17).date()
+
+    pra_switch = False
 
     '''what data does it need for each player?
         Player game data from similar games
@@ -104,14 +106,28 @@ with app.app_context():
     action_network_points_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-points&subcategory=points'
     action_network_assists_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-assists&subcategory=assists'
     action_network_rebounds_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-rebounds&subcategory=rebounds'
+    action_network_pra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb-+-ast'
+    # action_network_pr_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb'
+    # action_network_pa_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-ast'
+    # action_network_ra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=ast-+-reb'
+
 
     action_network_points = requests.get(action_network_points_url, headers={'User-Agent':"Mozilla/5.0"})
     action_network_assists = requests.get(action_network_assists_url, headers={'User-Agent':"Mozilla/5.0"})
     action_network_rebounds = requests.get(action_network_rebounds_url, headers={'User-Agent':"Mozilla/5.0"})
+    action_network_pra = requests.get(action_network_pra_url, headers={'User-Agent':"Mozilla/5.0"})
+    # action_network_pr = requests.get(action_network_pr_url, headers={'User-Agent':"Mozilla/5.0"})
+    # action_network_pa = requests.get(action_network_pa_url, headers={'User-Agent':"Mozilla/5.0"})
+    # action_network_ra = requests.get(action_network_ra_url, headers={'User-Agent':"Mozilla/5.0"})
 
     points = BeautifulSoup(action_network_points.text, 'html.parser')
     assists = BeautifulSoup(action_network_assists.text, 'html.parser')
     rebounds = BeautifulSoup(action_network_rebounds.text, 'html.parser')
+    pra = BeautifulSoup(action_network_pra.text, 'html.parser')
+    # pr = BeautifulSoup(action_network_pr.text, 'html.parser')
+    # pa = BeautifulSoup(action_network_pa.text, 'html.parser')
+    # ra = BeautifulSoup(action_network_ra.text, 'html.parser')
+
 
 
 
@@ -176,6 +192,80 @@ with app.app_context():
                 odds_dict[name] = {}
                 odds_dict[name]["rebounds"] = line
 
+
+    game_pra = pra.select('tbody')
+
+    for match in game_pra:
+        pra_rows = match.select('tr')
+        
+        for row in pra_rows:
+            name = row.select('.sportsbook-row-name')[0].text
+            if name.endswith(" "):
+                name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
+            if name in odds_dict:
+                line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+                odds_dict[name]["pra"] = line
+            else:
+                odds_dict[name] = {}
+                odds_dict[name]["pra"] = line
+
+    # game_pr = pr.select('tbody')
+
+    # for match in game_pr:
+    #     pr_rows = match.select('tr')
+        
+    #     for row in pr_rows:
+    #         name = row.select('.sportsbook-row-name')[0].text
+    #         if name.endswith(" "):
+    #             name = name.rstrip(name[-1])
+    #         if name.startswith(" "):
+    #             name = name[1:]
+    #         if name in odds_dict:
+    #             line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+    #             odds_dict[name]["pr"] = line
+    #         else:
+    #             odds_dict[name] = {}
+    #             odds_dict[name]["pr"] = line
+
+
+    # game_ra = ra.select('tbody')
+
+    # for match in game_ra:
+    #     ra_rows = match.select('tr')
+        
+    #     for row in ra_rows:
+    #         name = row.select('.sportsbook-row-name')[0].text
+    #         if name.endswith(" "):
+    #             name = name.rstrip(name[-1])
+    #         if name.startswith(" "):
+    #             name = name[1:]
+    #         if name in odds_dict:
+    #             line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+    #             odds_dict[name]["ra"] = line
+    #         else:
+    #             odds_dict[name] = {}
+    #             odds_dict[name]["ra"] = line
+
+    # game_pa = pa.select('tbody')
+
+    # for match in game_pra:
+    #     pa_rows = match.select('tr')
+        
+    #     for row in pa_rows:
+    #         name = row.select('.sportsbook-row-name')[0].text
+    #         if name.endswith(" "):
+    #             name = name.rstrip(name[-1])
+    #         if name.startswith(" "):
+    #             name = name[1:]
+    #         if name in odds_dict:
+    #             line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+    #             odds_dict[name]["pa"] = line
+    #         else:
+    #             odds_dict[name] = {}
+    #             odds_dict[name]["pa"] = line
+
     new_odds_dict = odds_dict.copy()
 
     for item in odds_dict:
@@ -217,7 +307,7 @@ with app.app_context():
 
             if player_team in list_of_teams:
 
-                print(player_name)
+                print(f"{player_name} ({player_team})")
 
                 #find list of starters
 
@@ -511,9 +601,9 @@ with app.app_context():
                                 opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
                                 rest_trb_mean = mean([game.trb for game in team_player_games_the_rest])
 
-                                player_assists_modifier = opponent_assists_mean/rest_assists_mean if opponent_assists_mean > 0 else 0
-                                player_points_modifier = opponent_points_mean/rest_points_mean if opponent_points_mean > 0 else 0
-                                player_trb_modifier = opponent_trb_mean/rest_trb_mean if opponent_trb_mean > 0 else 0
+                                player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 0
+                                player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 0
+                                player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 0
 
                                 points_modifier_array.append(player_points_modifier)
                                 assists_modifier_array.append(player_assists_modifier)
@@ -572,6 +662,102 @@ with app.app_context():
                         points_bet = "none"
 
 
+                        if pra_switch:
+
+                            if "pra" in player_and_odds[1]:
+                                pra_predict = assists_predict + points_predict + trb_predict
+                                pra_diff = round(pra_predict - player_and_odds[1]["pra"],2)
+                                if pra_diff < 0:
+                                    pra_bet = "Under"
+                                else:
+                                    pra_bet = "Over"
+                                pra_diff_abs = abs(pra_diff)
+                                pra_perc = round((abs(pra_predict-player_and_odds[1]["pra"])/player_and_odds[1]["pra"]),2)
+                                pra_dict = {"name": player_name, 
+                                            "prop":"pra",
+                                            "line": player_and_odds[1]["pra"],
+                                            "projected": round(pra_predict,2),
+                                            "perc": pra_perc,
+                                            "diff": pra_diff_abs,
+                                            "bet": pra_bet}
+
+                                if pra_dict["perc"] > .9 or pra_dict["diff"] > 10:
+                                    bets.append(pra_dict)
+
+                            if "points" in player_and_odds[1] and "rebounds" in player_and_odds[1]:
+                                pr_predict = points_predict + trb_predict
+                                pr_line = player_and_odds[1]["points"]+player_and_odds[1]["rebounds"]
+                                pr_diff = round((pr_predict - pr_line),2)
+                                if pr_diff < 0:
+                                    pr_bet = "Under"
+                                else:
+                                    pr_bet = "Over"
+                                pr_diff_abs = abs(pr_diff)
+                                pr_perc = round((abs(pr_predict-pr_line)/pr_line),2)
+                                pr_dict = {"name": player_name, 
+                                            "prop":"pr",
+                                            "line": pr_line,
+                                            "projected": round(pr_predict,2),
+                                            "perc": pr_perc,
+                                            "diff": pr_diff_abs,
+                                            "bet": pr_bet}
+
+                                if pra_dict not in bets:
+
+                                    if pr_dict["perc"] > .7 or pr_dict["diff"] > 9:
+                                        bets.append(pr_dict)
+                            
+
+                            if "points" in player_and_odds[1] and "assists" in player_and_odds[1]:
+                                pa_predict = points_predict + assists_predict
+                                pa_line = player_and_odds[1]["points"]+player_and_odds[1]["assists"]
+                                pa_diff = round((pa_predict - pa_line),2)
+                                if pa_diff < 0:
+                                    pa_bet = "Under"
+                                else:
+                                    pa_bet = "Over"
+                                pa_diff_abs = abs(pa_diff)
+                                pa_perc = round((abs(pa_predict-pa_line)/pa_line),2)
+                                pa_dict = {"name": player_name, 
+                                            "prop":"pa",
+                                            "line": pa_line,
+                                            "projected": round(pa_predict,2),
+                                            "perc": pa_perc,
+                                            "diff": pa_diff_abs,
+                                            "bet": pa_bet}
+
+                                if pra_dict not in bets:
+
+                                    if pa_dict["perc"] > .7 or pa_dict["diff"] > 9:
+                                        bets.append(pa_dict)
+
+
+                            if "rebounds" in player_and_odds[1] and "assists" in player_and_odds[1]:
+                                ra_predict = trb_predict + assists_predict
+                                ra_line = player_and_odds[1]["rebounds"]+player_and_odds[1]["assists"]
+                                ra_diff = round((ra_predict - ra_line),2)
+                                if ra_diff < 0:
+                                    ra_bet = "Under"
+                                else:
+                                    ra_bet = "Over"
+                                ra_diff_abs = abs(ra_diff)
+                                ra_perc = round((abs(ra_predict-ra_line)/ra_line),2)
+                                ra_dict = {"name": player_name, 
+                                            "prop":"ra",
+                                            "line": ra_line,
+                                            "projected": round(ra_predict,2),
+                                            "perc": ra_perc,
+                                            "diff": ra_diff_abs,
+                                            "bet": ra_bet}
+
+
+                                if pra_dict not in bets:
+
+                                    if ra_dict["perc"] > .7 or ra_dict["diff"] > 9:
+                                        bets.append(ra_dict)
+
+
+
                         if "assists" in player_and_odds[1]:
                             assist_diff = round((assists_predict - player_and_odds[1]["assists"]),2)
                             if assist_diff < 0:
@@ -588,8 +774,15 @@ with app.app_context():
                                         "diff": assist_diff_abs,
                                         "bet": assist_bet}
 
-                            if assists_dict["perc"] > .8 or assists_dict["diff"] > 6:
-                                bets.append(assists_dict)
+                            if pra_switch:
+                                if pra_dict not in bets and pa_dict not in bets and ra_dict not in bets:
+
+                                    if assists_dict["perc"] > .8 or assists_dict["diff"] > 6:
+                                        bets.append(assists_dict)
+
+                            else:
+                                if assists_dict["perc"] > .8 or assists_dict["diff"] > 6:
+                                        bets.append(assists_dict)
 
                             print(assists_dict)
 
@@ -611,8 +804,16 @@ with app.app_context():
                                         "diff": trb_diff_abs,
                                         "bet": trb_bet}
 
-                            if trb_dict["perc"] > .8 or trb_dict["diff"] > 6:
-                                bets.append(trb_dict)
+                            if pra_switch:
+                                if pra_dict not in bets and ra_dict not in bets and pr_dict not in bets:
+
+                                    if trb_dict["perc"] > .8 or trb_dict["diff"] > 6:
+                                        bets.append(trb_dict)
+
+                            else:
+                                if trb_dict["perc"] > .8 or trb_dict["diff"] > 6:
+                                        bets.append(trb_dict)
+
                             print(trb_dict)
 
 
@@ -635,8 +836,15 @@ with app.app_context():
                                         "diff": points_diff_abs,
                                         "bet": points_bet}
 
-                            if points_dict["perc"] > .5 or points_dict["diff"] > 7:
-                                bets.append(points_dict)
+                            if pra_switch:
+                                if pra_dict not in bets and pa_dict not in bets and pr_dict not in bets:
+
+                                    if points_dict["perc"] > .5 or points_dict["diff"] > 6.5:
+                                        bets.append(points_dict)
+
+                            else:
+                                if points_dict["perc"] > .5 or points_dict["diff"] > 6.5:
+                                        bets.append(points_dict)
 
                             print(points_dict)
                             
