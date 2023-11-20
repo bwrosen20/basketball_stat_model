@@ -1,16 +1,36 @@
 from app import *
 from statistics import mean,mode
 from bs4 import BeautifulSoup
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from operator import itemgetter
 from sqlalchemy import or_
+from scrape_a_day import scrape_a_day
 import itertools
 import time
 import requests
 import ipdb
 
+
 with app.app_context():
 
+    time_url = "https://time.is/"
+    time_page = requests.get(time_url, headers = {'User-Agent':"Mozilla/5.0"})
+    time_doc = BeautifulSoup(time_page.text, 'html.parser')
+
+    time_string = time_doc.select("#dd")[0].text
+
+    format_date = datetime.strptime(time_string, "%A, %B %d, %Y").date()
+
+    yesterday = format_date - timedelta(1)
+
+    most_recent_game_date = Game.query.all()[-1].date.date()
+
+    if most_recent_game_date != yesterday:
+        scrape_a_day(yesterday)
+    else:
+        print("Already downloaded yesterdays games")
+
+    
 
     #set current date to todays date and run the algorithm to see projections
     current_date = datetime(2023,11,20).date()
