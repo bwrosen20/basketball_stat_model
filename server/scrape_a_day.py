@@ -18,7 +18,7 @@ import ipdb
 with app.app_context():
     
     #input the correct date and correct url then run program
-    todays_date = datetime(2023,11,16)
+    todays_date = datetime(2023,11,19)
             
     # headers = {'user-agent': 'my-app/0.0.1'}
     html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_2024_games-november.html", headers={'User-Agent':"Mozilla/5.0"})

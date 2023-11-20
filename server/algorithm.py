@@ -13,7 +13,7 @@ with app.app_context():
 
 
     #set current date to todays date and run the algorithm to see projections
-    current_date = datetime(2023,11,17).date()
+    current_date = datetime(2023,11,20).date()
 
     pra_switch = False
 
@@ -414,7 +414,7 @@ with app.app_context():
                                         if injured_player in team_player_names and this_current_player in games_with_injury:
                                             games_with_injury.remove(this_current_player)
 
-                        if len(games_with_injury)>5:
+                        if len(games_with_injury)>8:
                             games = games_with_injury
 
                         
@@ -425,6 +425,42 @@ with app.app_context():
                 
                     #latest 5 games at time
                     games_at_time = [game for game in games if game.game.date.time()==game_time][-3:]
+
+                    #last 3 games on specific day
+                    current_day = current_date.weekday()
+                    games_on_day = []
+                    for game in games:
+                        if game.game.date.weekday()==current_day:
+                            games_on_day.append(game)
+
+                    games_on_day = games_on_day[-3:]
+
+                    #last 4 games with specified rest period
+                    rest_days = []
+                    last_game = games_to_use[-1]
+                    day_of_last_game =last_game.game.date.weekday()
+                    last_game_day_of_month = last_game.game.date.day
+                    current_day_of_month = current_date.day
+                    weekdays_between = current_day - day_of_last_game
+                    if weekdays_between <0: 
+                        weekdays_between +=7
+                    days_between = current_day_of_month - last_game_day_of_month
+                    if  -7 <= days_between <= 7:
+                    
+                        for index, game in enumerate(games_to_use):
+                            if index>0:
+                                prev_game = games_to_use[index-1]
+                                prev_game_day_of_month = prev_game.game.date.day
+                                prev_game_day_of_week = prev_game.game.date.weekday()
+                                date_difference = game.game.date.day - prev_game_day_of_month
+                                if date_difference < 0:
+                                    date_difference += 7
+                                day_difference = game.game.date.weekday() - prev_game_day_of_week
+                                if day_difference == days_between or date_difference==weekdays_between:
+                                    rest_days.append(game)
+                    rest_days = rest_days[-4:]
+
+                    
 
 
                     #last 5 games
@@ -608,6 +644,7 @@ with app.app_context():
                                 points_modifier_array.append(player_points_modifier)
                                 assists_modifier_array.append(player_assists_modifier)
                                 trb_modifier_array.append(player_trb_modifier)
+
                     
                     assists_modifier = mean(assists_modifier_array)
                     trb_modifier = mean(trb_modifier_array)
@@ -625,6 +662,8 @@ with app.app_context():
                         latest_home_or_away_games.extend(games_with_injury[-3:])
                     if opponent_injury:
                         latest_home_or_away_games.extend(games_with_opp_injury[-3:])
+                    latest_home_or_away_games.extend(games_on_day)
+                    latest_home_or_away_games.extend(rest_days)
 
                     latest_home_or_away_games.reverse()
 
@@ -660,7 +699,7 @@ with app.app_context():
                         assist_bet = "none"
                         trb_bet = "none"
                         points_bet = "none"
-
+                        pra_dict = []
 
                         if pra_switch:
 
@@ -777,11 +816,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and pa_dict not in bets and ra_dict not in bets:
 
-                                    if assists_dict["perc"] > .8 or assists_dict["diff"] > 6:
+                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and (assists_predict > 8.2)):
                                         bets.append(assists_dict)
 
                             else:
-                                if assists_dict["perc"] > .8 or assists_dict["diff"] > 6:
+                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and (assists_predict > 8.2)):
                                         bets.append(assists_dict)
 
                             print(assists_dict)
@@ -807,11 +846,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and ra_dict not in bets and pr_dict not in bets:
 
-                                    if trb_dict["perc"] > .8 or trb_dict["diff"] > 6:
+                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and (trb_predict > 9.8)):
                                         bets.append(trb_dict)
 
                             else:
-                                if trb_dict["perc"] > .8 or trb_dict["diff"] > 6:
+                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and (trb_predict > 9.8)):
                                         bets.append(trb_dict)
 
                             print(trb_dict)
@@ -848,20 +887,20 @@ with app.app_context():
 
                             print(points_dict)
                             
-                # if player_name=="Klay Thompson":
+                # if player_name=="Zach Collins":
                 #     ipdb.set_trace()        
 
-                # if player_name=="Nicolas Claxton":
+                # if player_name=="P.J. Washington":
                 #     ipdb.set_trace()
                 print(f"Points Multipler: {round(points_modifier,2)}")
                 print(f"Assists Multipler: {round(assists_modifier,2)}")
                 print(f"Trb Multipler: {round(trb_modifier,2)}\n")
-                if points_predict>8.8 and assists_predict>8.8 and trb_predict>8.8:
+                if points_predict>9.8 and assists_predict>9.8 and trb_predict>9.8:
                     triple_doubles.append(player_name)
-                if ((points_predict>8.8 and assists_predict>8.8) or (assists_predict>8.8 and trb_predict>8.8) or (points_predict>8.8 and trb_predict>8.8)):
+                if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
 
-    sorted_bets = sorted(bets,key=itemgetter('diff'))
+    sorted_bets = sorted(bets,key=itemgetter('perc'))
         
     for item in sorted_bets:
         name = item["name"]
