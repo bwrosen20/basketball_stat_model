@@ -16,24 +16,27 @@ with app.app_context():
     time_url = "https://time.is/"
     time_page = requests.get(time_url, headers = {'User-Agent':"Mozilla/5.0"})
     time_doc = BeautifulSoup(time_page.text, 'html.parser')
-
     time_string = time_doc.select("#dd")[0].text
-
     format_date = datetime.strptime(time_string, "%A, %B %d, %Y").date()
-
     yesterday = format_date - timedelta(1)
-
     most_recent_game_date = Game.query.all()[-1].date.date()
+    time_list = time_string.replace(",","").split()
+    month = time_list[1].lower()
+    year = int(time_list[3])
+    end_months = ["september", "october", "november", "december"]
+    if month in end_months:
+        year = year+1
+    year_string = str(year)
 
     if most_recent_game_date != yesterday:
-        scrape_a_day(yesterday)
+        scrape_a_day(yesterday,month,year)
     else:
-        print("Already downloaded yesterdays games")
+        print("All games have been downloaded\n")
 
     
 
     #set current date to todays date and run the algorithm to see projections
-    current_date = datetime(2023,11,20).date()
+    current_date = format_date
 
     pra_switch = False
 
@@ -63,7 +66,7 @@ with app.app_context():
 
     #get game data
 
-    schedule_page_url = "https://www.basketball-reference.com/leagues/NBA_2024_games-november.html"
+    schedule_page_url = f"https://www.basketball-reference.com/leagues/NBA_{year_string}_games-{month}.html"
     schedule_page = requests.get(schedule_page_url, headers = {'User-Agent':"Mozilla/5.0"})
     schedule = BeautifulSoup(schedule_page.text, 'html.parser')
 
@@ -126,7 +129,7 @@ with app.app_context():
     action_network_points_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-points&subcategory=points'
     action_network_assists_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-assists&subcategory=assists'
     action_network_rebounds_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-rebounds&subcategory=rebounds'
-    action_network_pra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb-+-ast'
+   
     # action_network_pr_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb'
     # action_network_pa_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-ast'
     # action_network_ra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=ast-+-reb'
@@ -135,7 +138,7 @@ with app.app_context():
     action_network_points = requests.get(action_network_points_url, headers={'User-Agent':"Mozilla/5.0"})
     action_network_assists = requests.get(action_network_assists_url, headers={'User-Agent':"Mozilla/5.0"})
     action_network_rebounds = requests.get(action_network_rebounds_url, headers={'User-Agent':"Mozilla/5.0"})
-    action_network_pra = requests.get(action_network_pra_url, headers={'User-Agent':"Mozilla/5.0"})
+   
     # action_network_pr = requests.get(action_network_pr_url, headers={'User-Agent':"Mozilla/5.0"})
     # action_network_pa = requests.get(action_network_pa_url, headers={'User-Agent':"Mozilla/5.0"})
     # action_network_ra = requests.get(action_network_ra_url, headers={'User-Agent':"Mozilla/5.0"})
@@ -143,14 +146,17 @@ with app.app_context():
     points = BeautifulSoup(action_network_points.text, 'html.parser')
     assists = BeautifulSoup(action_network_assists.text, 'html.parser')
     rebounds = BeautifulSoup(action_network_rebounds.text, 'html.parser')
-    pra = BeautifulSoup(action_network_pra.text, 'html.parser')
+    
     # pr = BeautifulSoup(action_network_pr.text, 'html.parser')
     # pa = BeautifulSoup(action_network_pa.text, 'html.parser')
     # ra = BeautifulSoup(action_network_ra.text, 'html.parser')
 
 
+    if pra_switch:
 
-
+        action_network_pra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb-+-ast'
+        action_network_pra = requests.get(action_network_pra_url, headers={'User-Agent':"Mozilla/5.0"})
+        pra = BeautifulSoup(action_network_pra.text, 'html.parser')
 
 
     odds_dict = {}
@@ -212,24 +218,24 @@ with app.app_context():
                 odds_dict[name] = {}
                 odds_dict[name]["rebounds"] = line
 
+    if pra_switch:
+        game_pra = pra.select('tbody')
 
-    game_pra = pra.select('tbody')
-
-    for match in game_pra:
-        pra_rows = match.select('tr')
-        
-        for row in pra_rows:
-            name = row.select('.sportsbook-row-name')[0].text
-            if name.endswith(" "):
-                name = name.rstrip(name[-1])
-            if name.startswith(" "):
-                name = name[1:]
-            if name in odds_dict:
-                line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
-                odds_dict[name]["pra"] = line
-            else:
-                odds_dict[name] = {}
-                odds_dict[name]["pra"] = line
+        for match in game_pra:
+            pra_rows = match.select('tr')
+            
+            for row in pra_rows:
+                name = row.select('.sportsbook-row-name')[0].text
+                if name.endswith(" "):
+                    name = name.rstrip(name[-1])
+                if name.startswith(" "):
+                    name = name[1:]
+                if name in odds_dict:
+                    line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+                    odds_dict[name]["pra"] = line
+                else:
+                    odds_dict[name] = {}
+                    odds_dict[name]["pra"] = line
 
     # game_pr = pr.select('tbody')
 
@@ -836,11 +842,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and pa_dict not in bets and ra_dict not in bets:
 
-                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and (assists_predict > 8.2)):
+                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 8.2) or (player_and_odds[1]["assists"] > 8.2))):
                                         bets.append(assists_dict)
 
                             else:
-                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and (assists_predict > 8.2)):
+                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 8.2) or (player_and_odds[1]["assists"] > 8.2))):
                                         bets.append(assists_dict)
 
                             print(assists_dict)
@@ -866,11 +872,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and ra_dict not in bets and pr_dict not in bets:
 
-                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and (trb_predict > 9.8)):
+                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 8.2) or (player_and_odds[1]["rebounds"] > 8.2))):
                                         bets.append(trb_dict)
 
                             else:
-                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and (trb_predict > 9.8)):
+                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 8.2) or (player_and_odds[1]["rebounds"] > 8.2))):
                                         bets.append(trb_dict)
 
                             print(trb_dict)

@@ -18,12 +18,12 @@ import ipdb
 with app.app_context():
     
 
-    def scrape_a_day(yesterday):
+    def scrape_a_day(yesterday,month_of_games,year_of_games):
         #input the correct date and correct url then run program
         todays_date = yesterday
                 
         # headers = {'user-agent': 'my-app/0.0.1'}
-        html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_2024_games-november.html", headers={'User-Agent':"Mozilla/5.0"})
+        html = requests.get(f"https://www.basketball-reference.com/leagues/NBA_{year_of_games}_games-{month_of_games}.html", headers={'User-Agent':"Mozilla/5.0"})
         # date = html.select('div.ScheduleDay_sd_GFE_w')[0]
 
 
@@ -37,7 +37,7 @@ with app.app_context():
         for game in rows:
             date = game.select('th')[0].text
             format_date = datetime.strptime(date, "%a, %b %d, %Y").date()
-            if format_date == todays_date.date():
+            if format_date == todays_date:
                 new_date = date.replace(',','')
                 my_time = (game.select('td')[0].text)
                 empty_time = my_time.replace('p','').replace('a','').replace(":","")
