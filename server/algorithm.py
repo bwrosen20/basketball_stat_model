@@ -5,6 +5,7 @@ from datetime import datetime, date, timedelta
 from operator import itemgetter
 from sqlalchemy import or_
 from scrape_a_day import scrape_a_day
+import calendar
 import itertools
 import time
 import requests
@@ -28,8 +29,18 @@ with app.app_context():
         year = year+1
     year_string = str(year)
 
+    
+
+    month_of_yesterday = calendar.month_name[yesterday.month].lower()
+    year_of_yesterday = yesterday.year
+    if month_of_yesterday in end_months:
+        year_of_yesterday = yesterday.year+1
+    else:
+        year_of_yesterday = yesterday.year
+    year_of_yesterday_string = str(year_of_yesterday)
+
     if most_recent_game_date != yesterday:
-        scrape_a_day(yesterday,month,year)
+        scrape_a_day(yesterday,month_of_yesterday,year_of_yesterday)
     else:
         print("All games have been downloaded\n")
 
