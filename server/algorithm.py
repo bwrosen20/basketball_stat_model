@@ -74,7 +74,6 @@ with app.app_context():
 
     '''
 
-
     #get game data
 
     schedule_page_url = f"https://www.basketball-reference.com/leagues/NBA_{year_string}_games-{month}.html"
@@ -112,7 +111,7 @@ with app.app_context():
             game_data["time"]=time
 
             todays_games.append(game_data)
-    
+
 
 
     #parse espn injury page
@@ -136,117 +135,272 @@ with app.app_context():
         injured_list[team_name] = injured_players
 
 
+    #collect player prop data
 
-    action_network_points_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-points&subcategory=points'
-    action_network_assists_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-assists&subcategory=assists'
-    action_network_rebounds_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-rebounds&subcategory=rebounds'
-   
-    # action_network_pr_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb'
-    # action_network_pa_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-ast'
-    # action_network_ra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=ast-+-reb'
-
-
-    action_network_points = requests.get(action_network_points_url, headers={'User-Agent':"Mozilla/5.0"})
-    action_network_assists = requests.get(action_network_assists_url, headers={'User-Agent':"Mozilla/5.0"})
-    action_network_rebounds = requests.get(action_network_rebounds_url, headers={'User-Agent':"Mozilla/5.0"})
-   
-    # action_network_pr = requests.get(action_network_pr_url, headers={'User-Agent':"Mozilla/5.0"})
-    # action_network_pa = requests.get(action_network_pa_url, headers={'User-Agent':"Mozilla/5.0"})
-    # action_network_ra = requests.get(action_network_ra_url, headers={'User-Agent':"Mozilla/5.0"})
-
-    points = BeautifulSoup(action_network_points.text, 'html.parser')
-    assists = BeautifulSoup(action_network_assists.text, 'html.parser')
-    rebounds = BeautifulSoup(action_network_rebounds.text, 'html.parser')
-    
-    # pr = BeautifulSoup(action_network_pr.text, 'html.parser')
-    # pa = BeautifulSoup(action_network_pa.text, 'html.parser')
-    # ra = BeautifulSoup(action_network_ra.text, 'html.parser')
-
-
-    if pra_switch:
-
-        action_network_pra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb-+-ast'
-        action_network_pra = requests.get(action_network_pra_url, headers={'User-Agent':"Mozilla/5.0"})
-        pra = BeautifulSoup(action_network_pra.text, 'html.parser')
-
+    #create empty odds dictionary
 
     odds_dict = {}
     all_players = Player.query.all()
     for player in all_players:
         odds_dict[player.name]={}
 
-    game_points = points.select('tbody')
+
+    #draftkings player props
+
+    action_network_points_url = 'https://sportsbook.draftkings.com/sites/US-SB/api/v5/eventgroups/42648/categories/1215?format=json'
+    action_network_assists_url = 'https://sportsbook.draftkings.com/sites/US-SB/api/v5/eventgroups/42648/categories/1217?format=json'
+    action_network_rebounds_url = 'https://sportsbook.draftkings.com/sites/US-SB/api/v5/eventgroups/42648/categories/1216?format=json'
+   
+
+    #action network player props
+
+    # action_network_points_url = 'https://www.actionnetwork.com/nba/props/points'
+    # action_network_assists_url = 'https://www.actionnetwork.com/nba/props/assists'
+    # action_network_rebounds_url = 'https://www.actionnetwork.com/nba/props/rebounds'
+
+    action_network_points = requests.get(action_network_points_url, headers={'User-Agent':"Mozilla/5.0"}, allow_redirects=False)
+    action_network_assists = requests.get(action_network_assists_url, headers={'User-Agent':"Mozilla/5.0"}, allow_redirects=False)
+    action_network_rebounds = requests.get(action_network_rebounds_url, headers={'User-Agent':"Mozilla/5.0"}, allow_redirects=False)
+
+    try: 
+        points_page = action_network_points.json()["eventGroup"]["offerCategories"][2]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+    except KeyError:
+        try:
+            points_page = action_network_points.json()["eventGroup"]["offerCategories"][3]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+        except KeyError:
+            try:
+                points_page = action_network_points.json()["eventGroup"]["offerCategories"][4]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+            except KeyError:
+                try:
+                    points_page = action_network_points.json()["eventGroup"]["offerCategories"][5]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                except KeyError:
+                    try:
+                        points_page = action_network_points.json()["eventGroup"]["offerCategories"][6]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                    except KeyError:
+                        try:
+                            points_page = action_network_points.json()["eventGroup"]["offerCategories"][7]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                        except KeyError:
+                            try:
+                                points_page = action_network_points.json()["eventGroup"]["offerCategories"][8]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                            except KeyError:
+                                points_page = action_network_points.json()["eventGroup"]["offerCategories"][9]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+
+    try: 
+        rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][2]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+    except KeyError:
+        try:
+            rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][3]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+        except KeyError:
+            try:
+                rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][4]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+            except KeyError:
+                try:
+                    rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][5]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                except KeyError:
+                    try:
+                        rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][6]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                    except KeyError:
+                        try:
+                            rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][7]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                        except KeyError:
+                            try:
+                                rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][8]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                            except KeyError:
+                                rebounds_page = action_network_rebounds.json()["eventGroup"]["offerCategories"][9]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+
+
+    try: 
+        assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][2]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+    except KeyError:
+        try:
+            assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][3]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+        except KeyError:
+            try:
+                assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][4]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+            except KeyError:
+                try:
+                    assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][5]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                except KeyError:
+                    try:
+                        assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][6]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                    except KeyError:
+                        try:
+                            assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][7]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                        except KeyError:
+                            try:
+                                assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][8]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
+                            except KeyError:
+                                assists_page = action_network_assists.json()["eventGroup"]["offerCategories"][9]["offerSubcategoryDescriptors"][0]["offerSubcategory"]["offers"]
     
-    for match in game_points:
-        points_rows = match.select('tr')
+    for offer in points_page:
+        for inside in offer:
+            name = inside["outcomes"][0]["participant"]
+        if name in odds_dict:
+            line = inside["outcomes"][0]["line"]
+            odds_dict[name]["points"] = line
+        else:
+            odds_dict[name] = {}
+            odds_dict[name]["points"] = line
+
+    for offer in rebounds_page:
+        for inside in offer:
+            name = inside["outcomes"][0]["participant"]
+        if name in odds_dict:
+            line = inside["outcomes"][0]["line"]
+            odds_dict[name]["rebounds"] = line
+        else:
+            odds_dict[name] = {}
+            odds_dict[name]["rebounds"] = line
+
+    for offer in assists_page:
+        for inside in offer:
+            name = inside["outcomes"][0]["participant"]
+        if name in odds_dict:
+            line = inside["outcomes"][0]["line"]
+            odds_dict[name]["assists"] = line
+        else:
+            odds_dict[name] = {}
+            odds_dict[name]["assists"] = line
+
+    # assists = BeautifulSoup(action_network_assists.text, 'html.parser')
+    # rebounds = BeautifulSoup(action_network_rebounds.text, 'html.parser')
+
+    # action_network_pr_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb'
+    # action_network_pa_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-ast'
+    # action_network_ra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=ast-+-reb'
+   
+    # action_network_pr = requests.get(action_network_pr_url, headers={'User-Agent':"Mozilla/5.0"})
+    # action_network_pa = requests.get(action_network_pa_url, headers={'User-Agent':"Mozilla/5.0"})
+    # action_network_ra = requests.get(action_network_ra_url, headers={'User-Agent':"Mozilla/5.0"})
+    
+    # pr = BeautifulSoup(action_network_pr.text, 'html.parser')
+    # pa = BeautifulSoup(action_network_pa.text, 'html.parser')
+    # ra = BeautifulSoup(action_network_ra.text, 'html.parser')
+
+
+
+    #action network data collection
+
+    # points_page = points.select('tbody')[0]
+    # game_points = points_page.find_all('tr')
+    # for row in game_points:
+    #     name = row.select('td')[0].select('.total-prop-row__player-name')[0].text
+    #     if name in odds_dict:
+    #         line_num = row.select('td')[1].select('.css-1qynun2')[0].text[1:]
+    #         line = float(line_num)
+    #         odds_dict[name]["points"] = line
+    #     else:
+    #         odds_dict[name] = {}
+    #         odds_dict[name]["points"] = line
+
+    # assists_page = assists.select('tbody')[0]
+    # game_assists = assists_page.find_all('tr')
+    # for row in game_assists:
+    #     name = row.select('td')[0].select('.total-prop-row__player-name')[0].text
+    #     if name in odds_dict:
+    #         line_num = row.select('td')[1].select('.css-1qynun2')[0].text[1:]
+    #         line = float(line_num)
+    #         odds_dict[name]["assists"] = line
+    #     else:
+    #         odds_dict[name] = {}
+    #         odds_dict[name]["assists"] = line
+
+    # rebounds_page = rebounds.select('tbody')[0]
+    # game_rebounds = rebounds_page.find_all('tr')
+    # for row in game_rebounds:
+    #     name = row.select('td')[0].select('.total-prop-row__player-name')[0].text
+    #     if name in odds_dict:
+    #         line_num = row.select('td')[1].select('.css-1qynun2')[0].text[1:]
+    #         line = float(line_num)
+    #         odds_dict[name]["rebounds"] = line
+    #     else:
+    #         odds_dict[name] = {}
+    #         odds_dict[name]["rebounds"] = line
+
+
+    # if pra_switch:
+
+    #     action_network_pra_url = 'https://sportsbook.draftkings.com/leagues/basketball/nba?category=player-combos&subcategory=pts-+-reb-+-ast'
+    #     action_network_pra = requests.get(action_network_pra_url, headers={'User-Agent':"Mozilla/5.0"})
+    #     pra = BeautifulSoup(action_network_pra.text, 'html.parser')
+
+
+    #uncomment following for draftkings
+
+    # game_points = points.select('tbody')
+
+    # for match in game_points:
+    #     points_rows = match.select('tr')
         
-        for row in points_rows:
-            name = row.select('.sportsbook-row-name')[0].text
-            if name.endswith(" "):
-                name = name.rstrip(name[-1])
-            if name.startswith(" "):
-                name = name[1:]
-            if name in odds_dict:
-                line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
-                odds_dict[name]["points"] = line
-            else:
-                odds_dict[name] = {}
-                odds_dict[name]["points"] = line
+    #     for row in points_rows:
+    #         name = row.select('.sportsbook-row-name')[0].text
+    #         if name.endswith(" "):
+    #             name = name.rstrip(name[-1])
+    #         if name.startswith(" "):
+    #             name = name[1:]
+    #         if name in odds_dict:
+    #             line = float(row.select('.sportsbook-outcome-cell__line')[0].text)[1:]
+    #             odds_dict[name]["points"] = line
+    #         else:
+    #             odds_dict[name] = {}
+    #             odds_dict[name]["points"] = line
 
-    game_assists = assists.select('tbody')
+    # ipdb.set_trace()
 
-    for match in game_assists:
-        assists_rows = match.select('tr')
+    # game_assists = assists.select('tbody')
+
+    # for match in game_assists:
+    #     assists_rows = match.select('tr')
         
-        for row in assists_rows:
-            name = row.select('.sportsbook-row-name')[0].text
-            if name.endswith(" "):
-                name = name.rstrip(name[-1])
-            if name.startswith(" "):
-                name = name[1:]
-            if name in odds_dict:
-                line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
-                odds_dict[name]["assists"] = line
-            else:
-                odds_dict[name] = {}
-                odds_dict[name]["assists"] = line
+    #     for row in assists_rows:
+    #         name = row.select('.sportsbook-row-name')[0].text
+    #         if name.endswith(" "):
+    #             name = name.rstrip(name[-1])
+    #         if name.startswith(" "):
+    #             name = name[1:]
+    #         if name in odds_dict:
+    #             line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+    #             odds_dict[name]["assists"] = line
+    #         else:
+    #             odds_dict[name] = {}
+    #             odds_dict[name]["assists"] = line
 
-    game_rebounds = rebounds.select('tbody')
+    # game_rebounds = rebounds.select('tbody')
 
-    for match in game_rebounds:
-        rebounds_rows = match.select('tr')
+    # for match in game_rebounds:
+    #     rebounds_rows = match.select('tr')
         
-        for row in rebounds_rows:
-            name = row.select('.sportsbook-row-name')[0].text
-            if name.endswith(" "):
-                name = name.rstrip(name[-1])
-            if name.startswith(" "):
-                name = name[1:]
-            if name in odds_dict:
-                line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
-                odds_dict[name]["rebounds"] = line
-            else:
-                odds_dict[name] = {}
-                odds_dict[name]["rebounds"] = line
+    #     for row in rebounds_rows:
+    #         name = row.select('.sportsbook-row-name')[0].text
+    #         if name.endswith(" "):
+    #             name = name.rstrip(name[-1])
+    #         if name.startswith(" "):
+    #             name = name[1:]
+    #         if name in odds_dict:
+    #             line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+    #             odds_dict[name]["rebounds"] = line
+    #         else:
+    #             odds_dict[name] = {}
+    #             odds_dict[name]["rebounds"] = line
 
-    if pra_switch:
-        game_pra = pra.select('tbody')
+    # if pra_switch:
+    #     game_pra = pra.select('tbody')
 
-        for match in game_pra:
-            pra_rows = match.select('tr')
+    #     for match in game_pra:
+    #         pra_rows = match.select('tr')
             
-            for row in pra_rows:
-                name = row.select('.sportsbook-row-name')[0].text
-                if name.endswith(" "):
-                    name = name.rstrip(name[-1])
-                if name.startswith(" "):
-                    name = name[1:]
-                if name in odds_dict:
-                    line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
-                    odds_dict[name]["pra"] = line
-                else:
-                    odds_dict[name] = {}
-                    odds_dict[name]["pra"] = line
+    #         for row in pra_rows:
+    #             name = row.select('.sportsbook-row-name')[0].text
+    #             if name.endswith(" "):
+    #                 name = name.rstrip(name[-1])
+    #             if name.startswith(" "):
+    #                 name = name[1:]
+    #             if name in odds_dict:
+    #                 line = float(row.select('.sportsbook-outcome-cell__line')[0].text)
+    #                 odds_dict[name]["pra"] = line
+    #             else:
+    #                 odds_dict[name] = {}
+    #                 odds_dict[name]["pra"] = line
 
     # game_pr = pr.select('tbody')
 
@@ -318,7 +472,6 @@ with app.app_context():
     bets = []
     double_doubles = []
     triple_doubles = []
-
 
     for player_and_odds in new_odds_dict:
 
