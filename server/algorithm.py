@@ -235,6 +235,10 @@ with app.app_context():
     for offer in points_page:
         for inside in offer:
             name = inside["outcomes"][0]["participant"]
+            if name.endswith(" "):
+                name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
             line = inside["outcomes"][0]["line"]
             if name in odds_dict:
                 odds_dict[name]["points"] = line
@@ -245,6 +249,10 @@ with app.app_context():
     for offer in rebounds_page:
         for inside in offer:
             name = inside["outcomes"][0]["participant"]
+            if name.endswith(" "):
+                name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
             line = inside["outcomes"][0]["line"]
             if name in odds_dict:
                 odds_dict[name]["rebounds"] = line
@@ -255,6 +263,10 @@ with app.app_context():
     for offer in assists_page:
         for inside in offer:
             name = inside["outcomes"][0]["participant"]
+            if name.endswith(" "):
+                name = name.rstrip(name[-1])
+            if name.startswith(" "):
+                name = name[1:]
             line = inside["outcomes"][0]["line"]
             if name in odds_dict:
                 odds_dict[name]["assists"] = line
@@ -476,6 +488,8 @@ with app.app_context():
     for player_and_odds in new_odds_dict:
 
         player_name = player_and_odds[0]
+
+        
         
         #collect my own data about every game they've played in
         
@@ -572,7 +586,7 @@ with app.app_context():
 
                 
 
-                    #we got the injuries. Time to check the roster
+                   
 
 
 
@@ -604,10 +618,10 @@ with app.app_context():
                                         if injured_player in team_player_names and this_current_player in games_with_injury:
                                             games_with_injury.remove(this_current_player)
 
-                        if len(games_with_injury)>8:
+                        if len(games_with_injury)>3:
                             games = games_with_injury
 
-                        
+                    #we got the injuries. Time to check the roster
                         
 
 
