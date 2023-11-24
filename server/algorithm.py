@@ -43,11 +43,11 @@ with app.app_context():
         scrape_a_day(yesterday,month_of_yesterday,year_of_yesterday)
     else:
         print("All games have been downloaded\n")
-
     
 
     #set current date to todays date and run the algorithm to see projections
     current_date = format_date
+    # current_date = datetime(2023,11,24).date()
 
     pra_switch = False
 
@@ -235,32 +235,32 @@ with app.app_context():
     for offer in points_page:
         for inside in offer:
             name = inside["outcomes"][0]["participant"]
-        if name in odds_dict:
             line = inside["outcomes"][0]["line"]
-            odds_dict[name]["points"] = line
-        else:
-            odds_dict[name] = {}
-            odds_dict[name]["points"] = line
+            if name in odds_dict:
+                odds_dict[name]["points"] = line
+            else:
+                odds_dict[name] = {}
+                odds_dict[name]["points"] = line
 
     for offer in rebounds_page:
         for inside in offer:
             name = inside["outcomes"][0]["participant"]
-        if name in odds_dict:
             line = inside["outcomes"][0]["line"]
-            odds_dict[name]["rebounds"] = line
-        else:
-            odds_dict[name] = {}
-            odds_dict[name]["rebounds"] = line
+            if name in odds_dict:
+                odds_dict[name]["rebounds"] = line
+            else:
+                odds_dict[name] = {}
+                odds_dict[name]["rebounds"] = line
 
     for offer in assists_page:
         for inside in offer:
             name = inside["outcomes"][0]["participant"]
-        if name in odds_dict:
             line = inside["outcomes"][0]["line"]
-            odds_dict[name]["assists"] = line
-        else:
-            odds_dict[name] = {}
-            odds_dict[name]["assists"] = line
+            if name in odds_dict:
+                odds_dict[name]["assists"] = line
+            else:
+                odds_dict[name] = {}
+                odds_dict[name]["assists"] = line
 
     # assists = BeautifulSoup(action_network_assists.text, 'html.parser')
     # rebounds = BeautifulSoup(action_network_rebounds.text, 'html.parser')
