@@ -17,11 +17,17 @@ with app.app_context():
     time_url = "https://time.is/"
     time_page = requests.get(time_url, headers = {'User-Agent':"Mozilla/5.0"})
     time_doc = BeautifulSoup(time_page.text, 'html.parser')
-    time_string = time_doc.select("#dd")[0].text
-    format_date = datetime.strptime(time_string, "%A, %B %d, %Y").date()
-    yesterday = format_date - timedelta(1)
+    date_string = time_doc.select("#dd")[0].text
+    time_string = time_doc.select('#clock')[0].text 
+
+    #set current date to todays date and run the algorithm to see projections
+    current_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+    # current_date = datetime(2023,11,27).date()
+
+
+    yesterday = current_date - timedelta(1)
     most_recent_game_date = Game.query.all()[-1].date.date()
-    time_list = time_string.replace(",","").split()
+    time_list = date_string.replace(",","").split()
     month = time_list[1].lower()
     year = int(time_list[3])
     end_months = ["september", "october", "november", "december"]
@@ -45,9 +51,7 @@ with app.app_context():
         print("All games have been downloaded\n")
     
 
-    #set current date to todays date and run the algorithm to see projections
-    current_date = format_date
-    # current_date = datetime(2023,11,24).date()
+    
 
     pra_switch = False
 
@@ -509,7 +513,11 @@ with app.app_context():
             else:
                 player_team = last_game.game.visitor
 
-            if player_team in list_of_teams:
+            # if player_team=="Milwaukee Bucks" or player_team=="Portland Trail Blazers":
+            #     continue
+
+
+            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > datetime.now().time()):
 
                 print(f"{player_name} ({player_team})")
 
@@ -558,7 +566,7 @@ with app.app_context():
                             starters_in_lineups.append(player)
 
 
-                    if ((len(starters_in_lineups)>3) and (latest_minutes*.2 <= game.minutes <= latest_minutes*1.8)):
+                    if ((len(starters_in_lineups)>3) and (latest_minutes*.65 <= game.minutes <= latest_minutes*1.45)):
                         games.append(game)
 
             
@@ -833,13 +841,13 @@ with app.app_context():
                                 team_player_games_the_rest = [game for game in player_object.games if (game.game.home!=other_team and game.game.visitor!=other_team)][-20:]
 
                                 opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
-                                rest_assists_mean = mean([game.assists for game in team_player_games_the_rest])
+                                rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 0
 
                                 opponent_points_mean = mean([game.points for game in team_player_games_against_opp])
-                                rest_points_mean = mean([game.points for game in team_player_games_the_rest])
+                                rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 0
 
                                 opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
-                                rest_trb_mean = mean([game.trb for game in team_player_games_the_rest])
+                                rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 0
 
                                 player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 0
                                 player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 0
