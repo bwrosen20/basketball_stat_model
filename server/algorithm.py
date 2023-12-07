@@ -19,7 +19,7 @@ with app.app_context():
     time_doc = BeautifulSoup(time_page.text, 'html.parser')
     date_string = time_doc.select("#dd")[0].text
     time_string = time_doc.select('#clock')[0].text 
-
+    format_time = datetime.strptime(time_string,"%X%p").time()
     #set current date to todays date and run the algorithm to see projections
     current_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
     # current_date = datetime(2023,11,27).date()
@@ -517,7 +517,7 @@ with app.app_context():
             #     continue
 
 
-            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > datetime.now().time()):
+            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
 
                 print(f"{player_name} ({player_team})")
 
@@ -717,8 +717,8 @@ with app.app_context():
 
                     #opponent stat allowed to position
 
-                    opponent_games = Game.query.filter(or_(Game.visitor==other_team,Game.home==other_team))[-20:]
-                    team_games = Game.query.filter(or_(Game.visitor==player_team,Game.home==player_team))[-20:]
+                    opponent_games = Game.query.filter(or_(Game.visitor==other_team,Game.home==other_team))[-12:]
+                    team_games = Game.query.filter(or_(Game.visitor==player_team,Game.home==player_team))[-12:]
                     team_games_players = [game.players for game in team_games]
                     team_players = (list(itertools.chain.from_iterable(team_games_players)))
                     position_player_games = [game for game in team_players if (game.team==player_team and game.player.position==current_player.position)]
@@ -804,7 +804,7 @@ with app.app_context():
 
                     for team in team_list:
 
-                        team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-20:]
+                        team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-12:]
                         team_games_players = [game.players for game in team_games]
                         team_players = (list(itertools.chain.from_iterable(team_games_players)))
                         position_player_games = [game for game in team_players if (game.team==team and game.player.position==current_player.position)]
@@ -841,17 +841,17 @@ with app.app_context():
                                 team_player_games_the_rest = [game for game in player_object.games if (game.game.home!=other_team and game.game.visitor!=other_team)][-20:]
 
                                 opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
-                                rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 0
+                                rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
                                 opponent_points_mean = mean([game.points for game in team_player_games_against_opp])
-                                rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 0
+                                rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
                                 opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
-                                rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 0
+                                rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                                player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 0
-                                player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 0
-                                player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 0
+                                player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 1
+                                player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 1
+                                player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 1
 
                                 points_modifier_array.append(player_points_modifier)
                                 assists_modifier_array.append(player_assists_modifier)
@@ -1028,11 +1028,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and pa_dict not in bets and ra_dict not in bets:
 
-                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 8.2) or (player_and_odds[1]["assists"] > 8.2))):
+                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 9.4) or (player_and_odds[1]["assists"] > 9.4))):
                                         bets.append(assists_dict)
 
                             else:
-                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 8.2) or (player_and_odds[1]["assists"] > 8.2))):
+                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 9.4) or (player_and_odds[1]["assists"] > 9.4))):
                                         bets.append(assists_dict)
 
                             print(assists_dict)
@@ -1058,11 +1058,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and ra_dict not in bets and pr_dict not in bets:
 
-                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 8.2) or (player_and_odds[1]["rebounds"] > 8.2))):
+                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 9.4) or (player_and_odds[1]["rebounds"] > 9.4))):
                                         bets.append(trb_dict)
 
                             else:
-                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 8.2) or (player_and_odds[1]["rebounds"] > 8.2))):
+                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 9.4) or (player_and_odds[1]["rebounds"] > 9.4))):
                                         bets.append(trb_dict)
 
                             print(trb_dict)
@@ -1113,8 +1113,19 @@ with app.app_context():
                     double_doubles.append(player_name)
 
     sorted_bets = sorted(bets,key=itemgetter('perc'))
+    sort_by_diff = sorted(bets,key=itemgetter('diff'))
         
     for item in sorted_bets:
+        name = item["name"]
+        prop = item["prop"]
+        line = item["line"]
+        projected = item["projected"]
+        bet = item["bet"]
+        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+
+    print("\nBets sorted by difference\n")
+
+    for item in sort_by_diff:
         name = item["name"]
         prop = item["prop"]
         line = item["line"]
