@@ -117,6 +117,13 @@ with app.app_context():
             todays_games.append(game_data)
 
 
+    # championship = {"home":"Los Angeles Lakers",
+    #                 "away":"Indiana Pacers",
+    #                 "time":datetime.strptime("2030","%H%M").time()}
+    # todays_games.append(championship)
+    # list_of_teams.append("Los Angeles Lakers")
+    # list_of_teams.append("Indiana Pacers")
+
 
     #parse espn injury page
     injury_url = "https://www.espn.com/nba/injuries"
@@ -571,6 +578,8 @@ with app.app_context():
                     if ((len(starters_in_lineups)>3) and (latest_minutes*.65 <= game.minutes <= latest_minutes*1.45)):
                         games.append(game)
 
+                if len(games)==0:
+                    games = games_to_use
             
 
                 if any(player_team in game.values() for game in todays_games):

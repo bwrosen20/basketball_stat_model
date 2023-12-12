@@ -116,7 +116,14 @@ with app.app_context():
 
             todays_games.append(game_data)
 
+    
 
+    # championship = {"home":"Los Angeles Lakers",
+    #                 "away":"Indiana Pacers",
+    #                 "time":datetime.strptime("2030","%H%M").time()}
+    # todays_games.append(championship)
+    # list_of_teams.append("Los Angeles Lakers")
+    # list_of_teams.append("Indiana Pacers")
 
     #parse espn injury page
     injury_url = "https://www.espn.com/nba/injuries"
@@ -489,6 +496,7 @@ with app.app_context():
     double_doubles = []
     triple_doubles = []
 
+
     for player_and_odds in new_odds_dict:
 
         player_name = player_and_odds[0]
@@ -568,6 +576,7 @@ with app.app_context():
 
                     if ((len(starters_in_lineups)>3) and (latest_minutes*.65 <= game.minutes <= latest_minutes*1.45)):
                         games.append(game)
+
 
             
 
@@ -676,9 +685,9 @@ with app.app_context():
 
 
                     #last 5 games
-                    latest_games = [game for game in games][-3:]
+                    latest_games = [game for game in games][-5:]
                     #last 8 home/away games
-                    latest_home_or_away_games = [game for game in games if game.home==player_home_or_away][-3:]
+                    latest_home_or_away_games = [game for game in games if game.home==player_home_or_away][-5:]
 
                     
                     #get latest matchups vs team
@@ -686,7 +695,7 @@ with app.app_context():
                     minutes_list = [game.minutes for game in latest_games]
                     minutes = mean(minutes_list)
                     
-                    games_vs_opponent = [game for game in games if (game.game.home==other_team or game.game.visitor==other_team)][-3:]
+                    games_vs_opponent = [game for game in games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
 
                             
                 
@@ -1090,14 +1099,17 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and pa_dict not in bets and pr_dict not in bets:
 
-                                    if points_dict["perc"] > .5 or points_dict["diff"] > 6.5:
+                                    if points_dict["perc"] > .5 or points_dict["diff"] > 6.2:
                                         bets.append(points_dict)
 
                             else:
-                                if points_dict["perc"] > .5 or points_dict["diff"] > 6.5:
+                                if points_dict["perc"] > .5 or points_dict["diff"] > 6.2:
                                         bets.append(points_dict)
 
                             print(points_dict)
+
+                            if player_name=="De'Aaron Fox":
+                                ipdb.set_trace()
                             
                 # if player_name=="Zach Collins":
                 #     ipdb.set_trace()        
@@ -1111,6 +1123,8 @@ with app.app_context():
                     triple_doubles.append(player_name)
                 if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
+
+
 
     sorted_bets = sorted(bets,key=itemgetter('perc'))
     sort_by_diff = sorted(bets,key=itemgetter('diff'))
