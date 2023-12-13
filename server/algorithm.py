@@ -1155,9 +1155,9 @@ with app.app_context():
                 if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
 
-                consistency.append({"name":player_name,"stat":"assists","value":assists_consistency})
-                consistency.append({"name":player_name,"stat":"points","value":points_consistency})
-                consistency.append({"name":player_name,"stat":"trb","value":trb_consistency})
+                consistency.append({"name":player_name,"stat":"assists","value":round(assists_consistency,2)})
+                consistency.append({"name":player_name,"stat":"points","value":round(points_consistency,2)})
+                consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2)})
 
 
     
@@ -1176,7 +1176,7 @@ with app.app_context():
         line = item["line"]
         projected = item["projected"]
         bet = item["bet"]
-        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}")
 
     print("\nBets sorted by difference\n")
 
@@ -1186,7 +1186,7 @@ with app.app_context():
         line = item["line"]
         projected = item["projected"]
         bet = item["bet"]
-        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}")
 
 
     print("\nBets with lowest consistency")
