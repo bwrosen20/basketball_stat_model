@@ -917,39 +917,47 @@ with app.app_context():
 
                     denominator = len(uniq_game_list)
                     if "points" in player_and_odds[1]:
-                        points_teaser = player_and_odds[1]["points"]-1
-                                if points_teaser > 10:
-                                    while points_teaser > 10:
-                                        points_teaser -=1
-                                        if points_teaser%5==0:
-                                          break
-                                    points_teaser_less = points_teaser-5
-                                else:
-                                    points_teaser_less = 0
+                        points_teaser = player_and_odds[1]["points"]-2
+                        if points_teaser > 10:
+                            while points_teaser > 10:
+                                points_teaser -=.5
+                                if points_teaser%5==0:
+                                    break
+                            if points_teaser > 14:
+                                points_teaser_less = points_teaser-5
+                            else:
+                                points_teaser_less = points_teaser
+                        else:
+                            points_teaser_less = points_teaser
 
                     if "assists" in player_and_odds[1]:
-                        assists_teaser = player_and_odds[1]["assists"]-1
-                                if assists_teaser > 2:
-                                    while assists_teaser > 2:
-                                        assists_teaser -=1
-                                        if assists_teaser%2==0:
-                                          break
-                            
-                                    assists_teaser_less = assists_teaser-2
-                                else:
-                                    assists_teaser_less = 0
+                        assists_teaser = player_and_odds[1]["assists"]
+                        if assists_teaser > 2:
+                            while assists_teaser > 2:
+                                assists_teaser -=.5
+                                if assists_teaser%2==0:
+                                    break
+                            if assists_teaser > 3:
+                                assists_teaser_less = assists_teaser-2
+                            else:
+                                assists_teaser_less = assists_teaser
+                        else:
+                            assists_teaser_less = assists_teaser
 
                     if "rebounds" in player_and_odds[1]:
-                        rebounds_teaser = player_and_odds[1]["rebounds"]-1
-                                if rebounds_teaser > 4:
-                                    while rebounds_teaser > 4:
-                                        rebounds_teaser -=1
-                                        if rebounds_teaser%2==0:
-                                          break
-                                    rebounds_teaser_less = rebounds_teaser-2
-                                else:
-                                    rebounds_teaser_less = 0
-                        
+                        rebounds_teaser = player_and_odds[1]["rebounds"]
+                        if rebounds_teaser > 4:
+                            while rebounds_teaser > 4:
+                                rebounds_teaser -=.5
+                                if rebounds_teaser%2==0:
+                                    break
+                            if rebounds_teaser > 5:
+                                trb_teaser_less = rebounds_teaser-2
+                            else:
+                                trb_teaser_less = rebounds_teaser
+                        else:
+                            trb_teaser_less = rebounds_teaser
+                
 
                     for game in uniq_game_list:
                         if "points" in player_and_odds[1]:
@@ -959,25 +967,29 @@ with app.app_context():
                                 if game.points > points_teaser:
                                     points_teaser_value+=1
                         else:
-                            points_consistency = .5*len(uniq_game_list)
+                            points_consistency = .5*denominator
                         if "assists" in player_and_odds[1]:
                             if game.assists > player_and_odds[1]["assists"]:
                                 assists_consistency +=1
-                            if game.assists > assists_teaser:
-                                assists_teaser_value+=1
+                            if assists_teaser > 1:
+                                if game.assists > assists_teaser:
+                                    assists_teaser_value+=1
                         else:
-                            assists_consistency = .5*(len(uniq_game_list))
+                            assists_consistency = .5*(denominator)
                         if "rebounds" in player_and_odds[1]:
                             if game.trb > player_and_odds[1]["rebounds"]:
                                 trb_consistency +=1
-                            if game.trb > rebounds_teaser:
-                                rebounds_teaser_value+=1
+                            if rebounds_teaser > 3:
+                                if game.trb > rebounds_teaser:
+                                    trb_teaser_value+=1
                         else:
-                            trb_consistency = .5*len(uniq_game_list)
+                            trb_consistency = .5*denominator
 
 
-                    if points_teaser_value > .5* len(uniq_game_list):
-                        high_value_teasers.append({"name":player_name,"prop":"points","value":points_teaser_value/len(uniq_game_list)})
+
+                    if points_teaser_value > .5* denominator and points_teaser >=10:
+                        value = round(points_teaser_value/denominator,2)
+                        high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser})
                     elif points_teaser_value == 0:
                         pass
                     else:
@@ -986,11 +998,14 @@ with app.app_context():
                             if "points" in player_and_odds[1]:
                                 if game.points > points_teaser_less:
                                     points_teaser_less_value+=1
-                        if points_teaser_less_value > .5*len(uniq_game_list):
-                            low_value_teasers.append({"name":player_name,"prop":"points","value":points_teaser_less_value/len(uniq_game_list)})
+                        if points_teaser_less_value > .5*denominator and points_teaser_less >= 10:
+                            value = round(points_teaser_less_value/denominator,2)
+                            low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less})
 
-                    if assists_teaser_value > .5* len(uniq_game_list):
-                        high_value_teasers.append({"name":player_name,"prop":"assists","value":assists_teaser_value/len(uniq_game_list)})
+
+                    if assists_teaser_value > .5* denominator and assists_teaser >=2:
+                        value = round(assists_teaser_value/denominator,2)
+                        high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser})
                     elif assists_teaser_value == 0:
                         pass
                     else:
@@ -999,11 +1014,13 @@ with app.app_context():
                             if "points" in player_and_odds[1]:
                                 if game.assists > assists_teaser_less:
                                     assists_teaser_less_value+=1
-                        if assists_teaser_less_value > .5*len(uniq_game_list):
-                            low_value_teasers.append({"name":player_name,"prop":"assists","value":assists_teaser_less_value/len(uniq_game_list)})
+                        if assists_teaser_less_value > .5*denominator and assists_teaser_less >=2:
+                            value = round(assists_teaser_less_value/denominator,2)
+                            low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less})
 
-                    if trb_teaser_value > .5* len(uniq_game_list):
-                        high_value_teasers.append({"name":player_name,"prop":"rebounds","value":assists_teaser_value/len(uniq_game_list)})
+                    if trb_teaser_value > .5* denominator and rebounds_teaser >=4:
+                        value = round(assists_teaser_value/denominator,2)
+                        high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser})
                     elif trb_teaser_value == 0:
                         pass
                     else:
@@ -1012,8 +1029,10 @@ with app.app_context():
                             if "points" in player_and_odds[1]:
                                 if game.trb > trb_teaser_less:
                                     trb_teaser_less_value+=1
-                        if trb_teaser_less_value > .5*len(uniq_game_list):
-                            low_value_teasers.append({"name":player_name,"prop":"rebounds","value":trb_teaser_less_value/len(uniq_game_list)})
+                        if trb_teaser_less_value > .5*denominator and trb_teaser_less >=4:
+                            value = round(trb_teaser_less_value/denominator,2)
+                            low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less})
+
 
 
                     points_consistency = points_consistency/denominator*2
@@ -1021,7 +1040,7 @@ with app.app_context():
                     trb_consistency = trb_consistency/denominator*2
 
 
-                    if len(uniq_game_list) > 0:
+                    if denominator > 0:
 
                         assists_list = [game.assists for game in uniq_game_list]
                         points_list = [game.points for game in uniq_game_list]
@@ -1258,10 +1277,10 @@ with app.app_context():
     highest_consistency = sorted_consistency[-15:]
     highest_consistency.reverse()
 
-    sorted_high_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))
+    sorted_high_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))[-10:]
     sorted_high_value_teasers.reverse()
 
-    sorted_low_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))
+    sorted_low_value_teasers = sorted(low_value_teasers,key=itemgetter('value'))[-10:]
     sorted_low_value_teasers.reverse()
 
     sorted_bets = sorted(bets,key=itemgetter('perc'))
@@ -1308,15 +1327,17 @@ with app.app_context():
         name=item["name"]
         prop = item["prop"]
         value = item["value"]
-        print(f"{name} {stat}: {value}")
+        teaser = item["teaser"]
+        print(f"{name} {teaser} {prop}: {value}")
 
-     print("\nLow value teasers\n")
+    print("\nLow value teasers\n")
 
     for item in sorted_low_value_teasers:
         name=item["name"]
         prop = item["prop"]
         value = item["value"]
-        print(f"{name} {stat}: {value}")
+        teaser = item["teaser"]
+        print(f"{name} {teaser} {prop}: {value}")
 
 
 
