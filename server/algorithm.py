@@ -493,6 +493,7 @@ with app.app_context():
     #new_odds_dict is a dicitonary of all today's props
 
     bets = []
+    consistency = []
     double_doubles = []
     triple_doubles = []
 
@@ -903,6 +904,33 @@ with app.app_context():
                     uniq_game_list = [game for game in uniq_game_list]
 
 
+                    assists_consistency = 0
+                    points_consistency = 0
+                    trb_consistency = 0
+                    denominator = len(uniq_game_list)
+
+                    for game in uniq_game_list:
+                        if "points" in player_and_odds[1]:
+                            if game.points > player_and_odds[1]["points"]:
+                                points_consistency +=1
+                        else:
+                            points_consistency = .5*len(uniq_game_list)
+                        if "assists" in player_and_odds[1]:
+                            if game.assists > player_and_odds[1]["assists"]:
+                                assists_consistency +=1
+                        else:
+                            assists_consistency = .5*(len(uniq_game_list))
+                        if "rebounds" in player_and_odds[1]:
+                            if game.trb > player_and_odds[1]["rebounds"]:
+                                trb_consistency +=1
+                        else:
+                            trb_consistency = .5*len(uniq_game_list)
+
+                    points_consistency = points_consistency/denominator*2
+                    assists_consistency = assists_consistency/denominator*2
+                    trb_consistency = trb_consistency/denominator*2
+
+
                     if len(uniq_game_list) > 0:
 
                         assists_list = [game.assists for game in uniq_game_list]
@@ -913,9 +941,9 @@ with app.app_context():
                         points_factor = mean(points_list)
                         trb_factor = mean(trb_list)
 
-                        assists_predict = round((0.6*assists_factor+0.4*assists_similar)*assists_modifier,2)
-                        points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier,2)
-                        trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier,2)
+                        assists_predict = round((0.6*assists_factor+0.4*assists_similar)*assists_modifier*assists_consistency,2)
+                        points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier*points_consistency,2)
+                        trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*trb_consistency,2)
 
                         assist_bet = "none"
                         trb_bet = "none"
@@ -1108,8 +1136,8 @@ with app.app_context():
 
                             print(points_dict)
 
-                            if player_name=="De'Aaron Fox":
-                                ipdb.set_trace()
+                            # if player_name=="De'Aaron Fox":
+                            #     ipdb.set_trace()
                             
                 # if player_name=="Zach Collins":
                 #     ipdb.set_trace()        
@@ -1118,13 +1146,26 @@ with app.app_context():
                 #     ipdb.set_trace()
                 print(f"Points Multipler: {round(points_modifier,2)}")
                 print(f"Assists Multipler: {round(assists_modifier,2)}")
-                print(f"Trb Multipler: {round(trb_modifier,2)}\n")
+                print(f"Trb Multipler: {round(trb_modifier,2)}")
+                print(f"Points Consistency: {round(points_consistency,2)}")
+                print(f"Assists Consistency: {round(assists_consistency,2)}")
+                print(f"Trb Consistency: {round(trb_consistency,2)}\n")
                 if points_predict>9.8 and assists_predict>9.8 and trb_predict>9.8:
                     triple_doubles.append(player_name)
                 if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
 
+                consistency.append({"name":player_name,"stat":"assists","value":assists_consistency})
+                consistency.append({"name":player_name,"stat":"points","value":points_consistency})
+                consistency.append({"name":player_name,"stat":"trb","value":trb_consistency})
 
+
+    
+
+
+    sorted_consistency = sorted(consistency,key=itemgetter('value'))
+    lowest_consistency = sorted_consistency[0:10]
+    highest_consistency = sorted_consistency[-10:]
 
     sorted_bets = sorted(bets,key=itemgetter('perc'))
     sort_by_diff = sorted(bets,key=itemgetter('diff'))
@@ -1146,6 +1187,23 @@ with app.app_context():
         projected = item["projected"]
         bet = item["bet"]
         print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+
+
+    print("\nBets with lowest consistency")
+
+    for item in lowest_consistency:
+        name=item["name"]
+        stat = item["stat"]
+        value = item["value"]
+        print(f"{name} {stat}: {value}")
+
+    print("\nBets with highest consistency")
+
+    for item in highest_consistency:
+        name=item["name"]
+        stat = item["stat"]
+        value = item["value"]
+        print(f"{name} {stat}: {value}")
 
     print(f"Double Doubles: {double_doubles}")
     print(f"Triple Doubles: {triple_doubles}\n")
