@@ -12,6 +12,8 @@ import requests
 import ipdb
 
 
+#compared to Algo A, Algo B has a smaller consistency multiplier
+
 with app.app_context():
 
     time_url = "https://time.is/"
@@ -116,6 +118,7 @@ with app.app_context():
 
             todays_games.append(game_data)
 
+    
 
     # championship = {"home":"Los Angeles Lakers",
     #                 "away":"Indiana Pacers",
@@ -123,7 +126,6 @@ with app.app_context():
     # todays_games.append(championship)
     # list_of_teams.append("Los Angeles Lakers")
     # list_of_teams.append("Indiana Pacers")
-
 
     #parse espn injury page
     injury_url = "https://www.espn.com/nba/injuries"
@@ -284,8 +286,6 @@ with app.app_context():
             else:
                 odds_dict[name] = {}
                 odds_dict[name]["assists"] = line
-
-    # odds_dict["Moritz Wagner"]["points"] = 13.5
 
     # assists = BeautifulSoup(action_network_assists.text, 'html.parser')
     # rebounds = BeautifulSoup(action_network_rebounds.text, 'html.parser')
@@ -495,8 +495,12 @@ with app.app_context():
     #new_odds_dict is a dicitonary of all today's props
 
     bets = []
+    consistency = []
     double_doubles = []
     triple_doubles = []
+    high_value_teasers = []
+    low_value_teasers = []
+
 
     for player_and_odds in new_odds_dict:
 
@@ -578,8 +582,7 @@ with app.app_context():
                     if ((len(starters_in_lineups)>3) and (latest_minutes*.65 <= game.minutes <= latest_minutes*1.45)):
                         games.append(game)
 
-                if len(games)==0:
-                    games = games_to_use
+
             
 
                 if any(player_team in game.values() for game in todays_games):
@@ -636,13 +639,8 @@ with app.app_context():
                                     if minutes > 2000:
                                         if injured_player in team_player_names and this_current_player in games_with_injury:
                                             games_with_injury.remove(this_current_player)
-                        games_to_add = []
-                        for game in games_with_injury:
-                            games_to_add.append(game)
-                            games_to_add.append(game)
-                        games_with_injury.extend(games_to_add)
 
-                        if len(games_with_injury)>6:
+                        if len(games_with_injury)>3:
                             games = games_with_injury
 
                     #we got the injuries. Time to check the roster
@@ -686,17 +684,15 @@ with app.app_context():
                                 day_difference = game.game.date.weekday() - prev_game_day_of_week
                                 if day_difference == days_between or date_difference==weekdays_between:
                                     rest_days.append(game)
-                                    rest_days.append(game)
-
                     rest_days = rest_days[-4:]
 
                     
 
 
                     #last 5 games
-                    latest_games = [game for game in games][-3:]
+                    latest_games = [game for game in games][-5:]
                     #last 8 home/away games
-                    latest_home_or_away_games = [game for game in games if game.home==player_home_or_away][-3:]
+                    latest_home_or_away_games = [game for game in games if game.home==player_home_or_away][-5:]
 
                     
                     #get latest matchups vs team
@@ -705,10 +701,6 @@ with app.app_context():
                     minutes = mean(minutes_list)
                     
                     games_vs_opponent = [game for game in games if (game.game.home==other_team or game.game.visitor==other_team)][-3:]
-                    games_to_add_opp = []
-                    for game in games_vs_opponent:
-                        games_to_add_opp.append(game)
-                    games_vs_opponent.extend(games_to_add_opp)
 
                             
                 
@@ -908,19 +900,149 @@ with app.app_context():
                     trb_similar = most_similar.trb
 
 
-                    # new_game_list = set(latest_home_or_away_games)
+                    new_game_list = set(latest_home_or_away_games)
 
-                    # uniq_game_list = list(new_game_list)
-
-                    # uniq_game_list = [game for game in uniq_game_list]
-
-                    uniq_game_list = latest_home_or_away_games
+                    uniq_game_list = list(new_game_list)
 
 
-                   
+                    uniq_game_list = [game for game in uniq_game_list]
+
+                    
+
+                    assists_consistency = 0
+                    points_consistency = 0
+                    trb_consistency = 0
+
+                    assists_teaser_value = 0
+                    points_teaser_value = 0
+                    trb_teaser_value = 0
+
+                    denominator = len(uniq_game_list)
+                    if "points" in player_and_odds[1]:
+                        points_teaser = player_and_odds[1]["points"]-2
+                        if points_teaser > 10:
+                            while points_teaser > 10:
+                                points_teaser -=.5
+                                if points_teaser%5==0:
+                                    break
+                            if points_teaser > 14:
+                                points_teaser_less = points_teaser-5
+                            else:
+                                points_teaser_less = points_teaser
+                        else:
+                            points_teaser_less = points_teaser
+
+                    if "assists" in player_and_odds[1]:
+                        assists_teaser = player_and_odds[1]["assists"]
+                        if assists_teaser > 2:
+                            while assists_teaser > 2:
+                                assists_teaser -=.5
+                                if assists_teaser%2==0:
+                                    break
+                            if assists_teaser > 3:
+                                assists_teaser_less = assists_teaser-2
+                            else:
+                                assists_teaser_less = assists_teaser
+                        else:
+                            assists_teaser_less = assists_teaser
+
+                    if "rebounds" in player_and_odds[1]:
+                        rebounds_teaser = player_and_odds[1]["rebounds"]
+                        if rebounds_teaser > 4:
+                            while rebounds_teaser > 4:
+                                rebounds_teaser -=.5
+                                if rebounds_teaser%2==0:
+                                    break
+                            if rebounds_teaser > 5:
+                                trb_teaser_less = rebounds_teaser-2
+                            else:
+                                trb_teaser_less = rebounds_teaser
+                        else:
+                            trb_teaser_less = rebounds_teaser
+                
+
+                    for game in uniq_game_list:
+                        if "points" in player_and_odds[1]:
+                            if game.points > player_and_odds[1]["points"]:
+                                points_consistency +=1
+                            if points_teaser > 9:
+                                if game.points > points_teaser:
+                                    points_teaser_value+=1
+                        else:
+                            points_consistency = .5*denominator
+                        if "assists" in player_and_odds[1]:
+                            if game.assists > player_and_odds[1]["assists"]:
+                                assists_consistency +=1
+                            if assists_teaser > 1:
+                                if game.assists > assists_teaser:
+                                    assists_teaser_value+=1
+                        else:
+                            assists_consistency = .5*(denominator)
+                        if "rebounds" in player_and_odds[1]:
+                            if game.trb > player_and_odds[1]["rebounds"]:
+                                trb_consistency +=1
+                            if rebounds_teaser > 3:
+                                if game.trb > rebounds_teaser:
+                                    trb_teaser_value+=1
+                        else:
+                            trb_consistency = .5*denominator
 
 
-                    if len(uniq_game_list) > 0:
+
+                    if points_teaser_value > .5* denominator and points_teaser >=10:
+                        value = round(points_teaser_value/denominator,2)
+                        high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser})
+                    elif points_teaser_value == 0:
+                        pass
+                    else:
+                        points_teaser_less_value = 0
+                        for game in uniq_game_list:
+                            if "points" in player_and_odds[1]:
+                                if game.points > points_teaser_less:
+                                    points_teaser_less_value+=1
+                        if points_teaser_less_value > .5*denominator and points_teaser_less >= 10:
+                            value = round(points_teaser_less_value/denominator,2)
+                            low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less})
+
+
+                    if assists_teaser_value > .5* denominator and assists_teaser >=2:
+                        value = round(assists_teaser_value/denominator,2)
+                        high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser})
+                    elif assists_teaser_value == 0:
+                        pass
+                    else:
+                        assists_teaser_less_value = 0
+                        for game in uniq_game_list:
+                            if "points" in player_and_odds[1]:
+                                if game.assists > assists_teaser_less:
+                                    assists_teaser_less_value+=1
+                        if assists_teaser_less_value > .5*denominator and assists_teaser_less >=2:
+                            value = round(assists_teaser_less_value/denominator,2)
+                            low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less})
+
+                    if trb_teaser_value > .5* denominator and rebounds_teaser >=4:
+                        value = round(assists_teaser_value/denominator,2)
+                        high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser})
+                    elif trb_teaser_value == 0:
+                        pass
+                    else:
+                        trb_teaser_less_value = 0
+                        for game in uniq_game_list:
+                            if "points" in player_and_odds[1]:
+                                if game.trb > trb_teaser_less:
+                                    trb_teaser_less_value+=1
+                        if trb_teaser_less_value > .5*denominator and trb_teaser_less >=4:
+                            value = round(trb_teaser_less_value/denominator,2)
+                            low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less})
+
+
+
+                    points_consistency = points_consistency/denominator+.5
+                    assists_consistency = assists_consistency/denominator+.5
+                    trb_consistency = trb_consistency/denominator+.5
+
+
+                    if denominator > 0:
 
                         assists_list = [game.assists for game in uniq_game_list]
                         points_list = [game.points for game in uniq_game_list]
@@ -930,9 +1052,9 @@ with app.app_context():
                         points_factor = mean(points_list)
                         trb_factor = mean(trb_list)
 
-                        assists_predict = round((0.75*assists_factor+0.25*assists_similar)*assists_modifier,2)
-                        points_predict = round((0.75*points_factor+0.25*points_similar)*points_modifier,2)
-                        trb_predict = round((0.75*trb_factor+0.25*trb_similar)*trb_modifier,2)
+                        assists_predict = round((0.6*assists_factor+0.4*assists_similar)*assists_modifier*assists_consistency,2)
+                        points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier*points_consistency,2)
+                        trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*trb_consistency,2)
 
                         assist_bet = "none"
                         trb_bet = "none"
@@ -1054,11 +1176,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and pa_dict not in bets and ra_dict not in bets:
 
-                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 8.4) or (player_and_odds[1]["assists"] > 8.4))):
+                                    if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 9.4) or (player_and_odds[1]["assists"] > 9.4))):
                                         bets.append(assists_dict)
 
                             else:
-                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 8.4) or (player_and_odds[1]["assists"] > 8.4))):
+                                if ((assists_dict["perc"] > .55 or assists_dict["diff"] > 6) and ((assists_predict > 9.4) or (player_and_odds[1]["assists"] > 9.4))):
                                         bets.append(assists_dict)
 
                             print(assists_dict)
@@ -1084,11 +1206,11 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and ra_dict not in bets and pr_dict not in bets:
 
-                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 8.4) or (player_and_odds[1]["rebounds"] > 8.4))):
+                                    if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 9.4) or (player_and_odds[1]["rebounds"] > 9.4))):
                                         bets.append(trb_dict)
 
                             else:
-                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 8.4) or (player_and_odds[1]["rebounds"] > 8.4))):
+                                if ((trb_dict["perc"] > .55 or trb_dict["diff"] > 6) and ((trb_predict > 9.4) or (player_and_odds[1]["rebounds"] > 9.4))):
                                         bets.append(trb_dict)
 
                             print(trb_dict)
@@ -1116,14 +1238,17 @@ with app.app_context():
                             if pra_switch:
                                 if pra_dict not in bets and pa_dict not in bets and pr_dict not in bets:
 
-                                    if points_dict["perc"] > .5 or points_dict["diff"] > 6.5:
+                                    if points_dict["perc"] > .5 or points_dict["diff"] > 6.2:
                                         bets.append(points_dict)
 
                             else:
-                                if points_dict["perc"] > .5 or points_dict["diff"] > 6.5:
+                                if points_dict["perc"] > .5 or points_dict["diff"] > 6.2:
                                         bets.append(points_dict)
 
                             print(points_dict)
+
+                            # if player_name=="De'Aaron Fox":
+                            #     ipdb.set_trace()
                             
                 # if player_name=="Zach Collins":
                 #     ipdb.set_trace()        
@@ -1132,14 +1257,40 @@ with app.app_context():
                 #     ipdb.set_trace()
                 print(f"Points Multipler: {round(points_modifier,2)}")
                 print(f"Assists Multipler: {round(assists_modifier,2)}")
-                print(f"Trb Multipler: {round(trb_modifier,2)}\n")
+                print(f"Trb Multipler: {round(trb_modifier,2)}")
+                print(f"Points Consistency: {round(points_consistency,2)}")
+                print(f"Assists Consistency: {round(assists_consistency,2)}")
+                print(f"Trb Consistency: {round(trb_consistency,2)}\n")
                 if points_predict>9.8 and assists_predict>9.8 and trb_predict>9.8:
                     triple_doubles.append(player_name)
                 if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
 
-    sorted_bets = sorted(bets,key=itemgetter('perc'))
-    sort_by_diff = sorted(bets,key=itemgetter('diff'))
+
+                if "assists" in player_and_odds[1]:
+                    consistency.append({"name":player_name,"stat":"assists","value":round(assists_consistency,2),"line":player_and_odds[1]["assists"]}) 
+                if "points" in player_and_odds[1]:
+                    consistency.append({"name":player_name,"stat":"points","value":round(points_consistency,2),"line":player_and_odds[1]["points"]}) 
+                if "rebounds" in player_and_odds[1]:
+                    consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2),"line":player_and_odds[1]["rebounds"]}) 
+
+
+    
+
+
+    sorted_consistency = sorted(consistency,key=itemgetter('value'))
+    lowest_consistency = sorted_consistency[0:10]
+    highest_consistency = sorted_consistency[-10:]
+    highest_consistency.reverse()
+
+    sorted_high_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))[-10:]
+    sorted_high_value_teasers.reverse()
+
+    sorted_low_value_teasers = sorted(low_value_teasers,key=itemgetter('value'))[-10:]
+    sorted_low_value_teasers.reverse()
+
+    sorted_bets = sorted(bets,key=itemgetter('perc'))[-10:]
+    sort_by_diff = sorted(bets,key=itemgetter('diff'))[-10:]
         
     for item in sorted_bets:
         name = item["name"]
@@ -1147,7 +1298,7 @@ with app.app_context():
         line = item["line"]
         projected = item["projected"]
         bet = item["bet"]
-        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}")
 
     print("\nBets sorted by difference\n")
 
@@ -1157,18 +1308,57 @@ with app.app_context():
         line = item["line"]
         projected = item["projected"]
         bet = item["bet"]
-        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}\n")
+        print(f"{name} {bet} in {prop}. Projected: {projected}, Line: {line}")
 
-    print(f"Double Doubles: {double_doubles}")
+
+    print("\nBets with lowest consistency")
+
+    for item in lowest_consistency:
+        name=item["name"]
+        stat = item["stat"]
+        value = item["value"]
+        line = item["line"]
+        print(f"{name} {line} {stat}: {value}")
+
+    print("\nBets with highest consistency")
+
+    for item in highest_consistency:
+        name=item["name"]
+        stat = item["stat"]
+        value = item["value"]
+        line = item["line"]
+        print(f"{name} {line} {stat}: {value}")
+
+    print("\nHigh value teasers\n")
+
+    for item in sorted_high_value_teasers:
+        name=item["name"]
+        prop = item["prop"]
+        value = item["value"]
+        teaser = item["teaser"]
+        print(f"{name} {teaser} {prop}: {value}")
+
+    print("\nLow value teasers\n")
+
+    for item in sorted_low_value_teasers:
+        name=item["name"]
+        prop = item["prop"]
+        value = item["value"]
+        teaser = item["teaser"]
+        print(f"{name} {teaser} {prop}: {value}")
+
+
+
+    print(f"\nDouble Doubles: {double_doubles}")
     print(f"Triple Doubles: {triple_doubles}\n")
 
     print("Injuries:")
-    
 
     for team,injuries in injured_list.items():
         if team in list_of_teams:
             print(f"{team}: {injuries}")
 
-    print("B")
+    print("\nAlgo B")
+
             
 
