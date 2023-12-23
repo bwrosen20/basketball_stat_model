@@ -19,7 +19,8 @@ with app.app_context():
     time_doc = BeautifulSoup(time_page.text, 'html.parser')
     date_string = time_doc.select("#dd")[0].text
     time_string = time_doc.select('#clock')[0].text 
-    format_time = datetime.strptime(time_string,"%X%p").time()
+    format_time = datetime.strptime(time_string,"%I:%M:%S%p").time()
+
     #set current date to todays date and run the algorithm to see projections
     current_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
     # current_date = datetime(2023,11,27).date()
@@ -918,7 +919,7 @@ with app.app_context():
 
                     denominator = len(uniq_game_list)
                     if "points" in player_and_odds[1]:
-                        points_teaser = player_and_odds[1]["points"]-2
+                        points_teaser = player_and_odds[1]["points"]-1
                         if points_teaser > 10:
                             while points_teaser > 10:
                                 points_teaser -=.5
