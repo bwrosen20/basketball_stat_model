@@ -1025,20 +1025,20 @@ with app.app_context():
                                 low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less})
 
 
-                        if assists_teaser_value > .7* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
-                            value = round(assists_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser})
-                        elif assists_teaser_value == 0:
-                            pass
-                        else:
-                            assists_teaser_less_value = 0
-                            for game in uniq_game_list:
-                                if "points" in player_and_odds[1]:
-                                    if game.assists > assists_teaser_less:
-                                        assists_teaser_less_value+=1
-                            if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and points_predict > player_and_odds[1]["assists"]:
-                                value = round(assists_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less})
+                        # if assists_teaser_value > .7* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
+                        #     value = round(assists_teaser_value/denominator,2)
+                        #     high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser})
+                        # elif assists_teaser_value == 0:
+                        #     pass
+                        # else:
+                        #     assists_teaser_less_value = 0
+                        #     for game in uniq_game_list:
+                        #         if "points" in player_and_odds[1]:
+                        #             if game.assists > assists_teaser_less:
+                        #                 assists_teaser_less_value+=1
+                        #     if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and points_predict > player_and_odds[1]["assists"]:
+                        #         value = round(assists_teaser_less_value/denominator,2)
+                        #         low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less})
 
                         if trb_teaser_value > .7* denominator and rebounds_teaser >=4 and points_predict > player_and_odds[1]["rebounds"]:
                             value = round(assists_teaser_value/denominator,2)
