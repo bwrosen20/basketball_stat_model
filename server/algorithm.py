@@ -871,9 +871,9 @@ with app.app_context():
                                 trb_modifier_array.append(player_trb_modifier)
 
                     
-                    assists_modifier = mean(assists_modifier_array)
-                    trb_modifier = mean(trb_modifier_array)
-                    points_modifier = mean(points_modifier_array)
+                    assists_modifier = round(mean(assists_modifier_array),2)
+                    trb_modifier = round(mean(trb_modifier_array),2)
+                    points_modifier = round(mean(points_modifier_array),2)
 
 
 
@@ -947,16 +947,9 @@ with app.app_context():
                             assists_teaser_less = assists_teaser
 
                     if "rebounds" in player_and_odds[1]:
-                        rebounds_teaser = player_and_odds[1]["rebounds"]
-                        if rebounds_teaser > 4:
-                            while rebounds_teaser > 4:
-                                rebounds_teaser -=.5
-                                if rebounds_teaser%2==0:
-                                    break
-                            if rebounds_teaser > 5:
-                                trb_teaser_less = rebounds_teaser-2
-                            else:
-                                trb_teaser_less = rebounds_teaser
+                        rebounds_teaser = player_and_odds[1]["rebounds"]-1.5
+                        if rebounds_teaser > 3:
+                            trb_teaser_less = rebounds_teaser-1
                         else:
                             trb_teaser_less = rebounds_teaser
                 
@@ -1011,7 +1004,7 @@ with app.app_context():
 
                         if points_teaser_value > .7* denominator and points_teaser >=10 and points_predict > player_and_odds[1]["points"]:
                             value = round(points_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser})
+                            high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict})
                         elif points_teaser_value == 0:
                             pass
                         else:
@@ -1022,38 +1015,38 @@ with app.app_context():
                                         points_teaser_less_value+=1
                             if points_teaser_less_value > .75*denominator and points_teaser_less >= 10 and points_predict > player_and_odds[1]["points"]:
                                 value = round(points_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less})
+                                low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less,"modifier":points_modifier,"proj":points_predict})
 
 
-                        # if assists_teaser_value > .7* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
-                        #     value = round(assists_teaser_value/denominator,2)
-                        #     high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser})
-                        # elif assists_teaser_value == 0:
-                        #     pass
-                        # else:
-                        #     assists_teaser_less_value = 0
-                        #     for game in uniq_game_list:
-                        #         if "points" in player_and_odds[1]:
-                        #             if game.assists > assists_teaser_less:
-                        #                 assists_teaser_less_value+=1
-                        #     if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and points_predict > player_and_odds[1]["assists"]:
-                        #         value = round(assists_teaser_less_value/denominator,2)
-                        #         low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less})
+                        if assists_teaser_value > .7* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
+                            value = round(assists_teaser_value/denominator,2)
+                            high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict})
+                        elif assists_teaser_value == 0:
+                            pass
+                        else:
+                            assists_teaser_less_value = 0
+                            for game in uniq_game_list:
+                                if "points" in player_and_odds[1]:
+                                    if game.assists > assists_teaser_less:
+                                        assists_teaser_less_value+=1
+                            if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and points_predict > player_and_odds[1]["assists"]:
+                                value = round(assists_teaser_less_value/denominator,2)
+                                low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less,"modifier":assists_modifier,"proj":assists_predict})
 
                         if trb_teaser_value > .7* denominator and rebounds_teaser >=4 and points_predict > player_and_odds[1]["rebounds"]:
                             value = round(assists_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser})
+                            high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict})
                         elif trb_teaser_value == 0:
                             pass
                         else:
                             trb_teaser_less_value = 0
                             for game in uniq_game_list:
-                                if "points" in player_and_odds[1]:
+                                if "rebounds" in player_and_odds[1]:
                                     if game.trb > trb_teaser_less:
                                         trb_teaser_less_value+=1
-                            if trb_teaser_less_value > .75*denominator and trb_teaser_less >=4 and points_predict > player_and_odds[1]["rebounds"]:
+                            if trb_teaser_less_value > .75*denominator and trb_teaser_less >=4 and trb_predict > player_and_odds[1]["rebounds"]:
                                 value = round(trb_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less})
+                                low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less,"modifier":trb_modifier,"proj":trb_predict})
 
                         assist_bet = "none"
                         trb_bet = "none"
@@ -1335,7 +1328,9 @@ with app.app_context():
         prop = item["prop"]
         value = item["value"]
         teaser = item["teaser"]
-        print(f"{name} {teaser} {prop}: {value}")
+        modifier = item["modifier"]
+        proj = item["proj"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj})")
 
     print("\nLow value teasers\n")
 
@@ -1344,7 +1339,9 @@ with app.app_context():
         prop = item["prop"]
         value = item["value"]
         teaser = item["teaser"]
-        print(f"{name} {teaser} {prop}: {value}")
+        modifier = item["modifier"]
+        proj = item["proj"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj})")
 
 
 
