@@ -529,9 +529,7 @@ with app.app_context():
             #     continue
 
 
-            if player_team in list_of_teams:
-
-                #and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time)
+            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
 
                 print(f"{player_name} ({player_team})")
 

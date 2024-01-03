@@ -12,8 +12,6 @@ import requests
 import ipdb
 
 
-#compared to Algo A, Algo B has a smaller consistency multiplier
-
 with app.app_context():
 
     time_url = "https://time.is/"
@@ -700,7 +698,7 @@ with app.app_context():
                     minutes_list = [game.minutes for game in latest_games]
                     minutes = mean(minutes_list)
                     
-                    games_vs_opponent = [game for game in games if (game.game.home==other_team or game.game.visitor==other_team)][-3:]
+                    games_vs_opponent = [game for game in games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
 
                             
                 
@@ -1037,9 +1035,9 @@ with app.app_context():
 
 
 
-                    points_consistency = points_consistency/denominator+.5
-                    assists_consistency = assists_consistency/denominator+.5
-                    trb_consistency = trb_consistency/denominator+.5
+                    points_consistency = points_consistency/denominator*2
+                    assists_consistency = assists_consistency/denominator*2
+                    trb_consistency = trb_consistency/denominator*2
 
 
                     if denominator > 0:
@@ -1266,21 +1264,17 @@ with app.app_context():
                 if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
 
-
-                if "assists" in player_and_odds[1]:
-                    consistency.append({"name":player_name,"stat":"assists","value":round(assists_consistency,2),"line":player_and_odds[1]["assists"]}) 
-                if "points" in player_and_odds[1]:
-                    consistency.append({"name":player_name,"stat":"points","value":round(points_consistency,2),"line":player_and_odds[1]["points"]}) 
-                if "rebounds" in player_and_odds[1]:
-                    consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2),"line":player_and_odds[1]["rebounds"]}) 
+                consistency.append({"name":player_name,"stat":"assists","value":round(assists_consistency,2)})
+                consistency.append({"name":player_name,"stat":"points","value":round(points_consistency,2)})
+                consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2)})
 
 
     
 
 
     sorted_consistency = sorted(consistency,key=itemgetter('value'))
-    lowest_consistency = sorted_consistency[0:10]
-    highest_consistency = sorted_consistency[-10:]
+    lowest_consistency = sorted_consistency[0:15]
+    highest_consistency = sorted_consistency[-15:]
     highest_consistency.reverse()
 
     sorted_high_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))[-10:]
@@ -1289,8 +1283,8 @@ with app.app_context():
     sorted_low_value_teasers = sorted(low_value_teasers,key=itemgetter('value'))[-10:]
     sorted_low_value_teasers.reverse()
 
-    sorted_bets = sorted(bets,key=itemgetter('perc'))[-10:]
-    sort_by_diff = sorted(bets,key=itemgetter('diff'))[-10:]
+    sorted_bets = sorted(bets,key=itemgetter('perc'))
+    sort_by_diff = sorted(bets,key=itemgetter('diff'))
         
     for item in sorted_bets:
         name = item["name"]
@@ -1317,8 +1311,7 @@ with app.app_context():
         name=item["name"]
         stat = item["stat"]
         value = item["value"]
-        line = item["line"]
-        print(f"{name} {line} {stat}: {value}")
+        print(f"{name} {stat}: {value}")
 
     print("\nBets with highest consistency")
 
@@ -1326,8 +1319,7 @@ with app.app_context():
         name=item["name"]
         stat = item["stat"]
         value = item["value"]
-        line = item["line"]
-        print(f"{name} {line} {stat}: {value}")
+        print(f"{name} {stat}: {value}")
 
     print("\nHigh value teasers\n")
 
@@ -1358,7 +1350,4 @@ with app.app_context():
         if team in list_of_teams:
             print(f"{team}: {injuries}")
 
-    print("\nAlgo B")
-
             
-
