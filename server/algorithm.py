@@ -529,7 +529,9 @@ with app.app_context():
             #     continue
 
 
-            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
+            if player_team in list_of_teams:
+
+                #and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time)
 
                 print(f"{player_name} ({player_team})")
 
@@ -814,10 +816,11 @@ with app.app_context():
                     trb_modifier_array=[]
 
                 
-
+                    team_games_array = []
+                    uniq_players = []
                     for team in team_list:
 
-                        team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-12:]
+                        team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-20:]
                         team_games_players = [game.players for game in team_games]
                         team_players = (list(itertools.chain.from_iterable(team_games_players)))
                         position_player_games = [game for game in team_players if (game.team==team and game.player.position==current_player.position)]
@@ -827,6 +830,8 @@ with app.app_context():
                         different_players = [{game.player.name:game.minutes} for game in position_player_games]
 
                         position_player_minutes = {}
+                        for name in uniq_position_player_names:
+                            uniq_players.append(name)
 
                         for player in uniq_position_player_names:
                             minutes_array = []
@@ -834,41 +839,48 @@ with app.app_context():
                                 for team_player,team_player_minutes in value.items():
                                     if player==team_player:
                                         minutes_array.append(team_player_minutes)
-                            position_player_minutes[player]=(mean(minutes_array))
+
+                            average = mean(minutes_array)
+                            error = average * .55
+                            for game in position_player_games:
+                                if game.player.name==player and average-error < game.minutes < average+error:
+                                    team_games_array.append(game)
 
                     
 
-                        sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
-                        sorted_position_minutes.reverse()
+                        # sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
+                        # sorted_position_minutes.reverse()
 
 
-                        if (len(sorted_position_minutes)>0 and len(sorted_position_minutes)>=current_player_depth):
-                            same_position_player = sorted_position_minutes[current_player_depth-1][0]
+                        # if (len(sorted_position_minutes)>0 and len(sorted_position_minutes)>=current_player_depth):
+                    # same_position_player = sorted_position_minutes[current_player_depth-1][0]
 
 
-                            player_object = Player.query.filter(Player.name==same_position_player).first()
+                    for player in uniq_players:
+                        player_object = Player.query.filter(Player.name==player).first()
 
-                            if len([game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)])>0:
+                        if len([game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)])>0:
 
-                                team_player_games_against_opp = [game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
-                                team_player_games_the_rest = [game for game in player_object.games if (game.game.home!=other_team and game.game.visitor!=other_team)][-20:]
+                            team_player_games_against_opp = [game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
+                            team_player_games_the_rest = [game for game in team_games_array if (game.player.name==player and game.game.home!=other_team and game.game.visitor!=other_team)]
 
-                                opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
-                                rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                                opponent_points_mean = mean([game.points for game in team_player_games_against_opp])
-                                rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
+                            opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
+                            rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                                opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
-                                rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
+                            opponent_points_mean = mean([game.points for game in team_player_games_against_opp])
+                            rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                                player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 1
-                                player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 1
-                                player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 1
+                            opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
+                            rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                                points_modifier_array.append(player_points_modifier)
-                                assists_modifier_array.append(player_assists_modifier)
-                                trb_modifier_array.append(player_trb_modifier)
+                            player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 1
+                            player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 1
+                            player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 1
+
+                            points_modifier_array.append(player_points_modifier)
+                            assists_modifier_array.append(player_assists_modifier)
+                            trb_modifier_array.append(player_trb_modifier)
 
                     
                     assists_modifier = round(mean(assists_modifier_array),2)
@@ -933,18 +945,12 @@ with app.app_context():
                             points_teaser_less = points_teaser
 
                     if "assists" in player_and_odds[1]:
-                        assists_teaser = player_and_odds[1]["assists"]
-                        if assists_teaser > 2:
-                            while assists_teaser > 2:
-                                assists_teaser -=.5
-                                if assists_teaser%2==0:
-                                    break
-                            if assists_teaser > 3:
-                                assists_teaser_less = assists_teaser-2
-                            else:
-                                assists_teaser_less = assists_teaser
+                        assists_teaser = player_and_odds[1]["assists"]-1.5
+                        if assists_teaser > 3:
+                            assists_teaser_less = assists_teaser-1
                         else:
                             assists_teaser_less = assists_teaser
+                    
 
                     if "rebounds" in player_and_odds[1]:
                         rebounds_teaser = player_and_odds[1]["rebounds"]-1.5
