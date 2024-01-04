@@ -752,15 +752,15 @@ with app.app_context():
 
                 
 
-                    sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
-                    sorted_position_minutes.reverse()
+                    # sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
+                    # sorted_position_minutes.reverse()
 
-                    current_player_depth = 0
+                    # current_player_depth = 0
 
-                    for index,value in enumerate(sorted_position_minutes):
-                        if value[0]==player_name:
-                            current_player_depth=index+1
-                            break
+                    # for index,value in enumerate(sorted_position_minutes):
+                    #     if value[0]==player_name:
+                    #         current_player_depth=index+1
+                    #         break
 
 
                     
@@ -814,11 +814,14 @@ with app.app_context():
                     trb_modifier_array=[]
 
                 
-                    team_games_array = []
-                    uniq_players = []
+                    
+                    
                     for team in team_list:
 
-                        team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-20:]
+
+                        team_games_array = []
+                        uniq_players = []
+                        team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-12:]
                         team_games_players = [game.players for game in team_games]
                         team_players = (list(itertools.chain.from_iterable(team_games_players)))
                         position_player_games = [game for game in team_players if (game.team==team and game.player.position==current_player.position)]
@@ -854,32 +857,40 @@ with app.app_context():
                     # same_position_player = sorted_position_minutes[current_player_depth-1][0]
 
 
-                    for player in uniq_players:
-                        player_object = Player.query.filter(Player.name==player).first()
+                        for player in uniq_players:
+                            player_object = Player.query.filter(Player.name==player).first()
 
-                        if len([game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)])>0:
+                            if len([game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)])>0:
 
-                            team_player_games_against_opp = [game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
-                            team_player_games_the_rest = [game for game in team_games_array if (game.player.name==player and game.game.home!=other_team and game.game.visitor!=other_team)]
+                                team_player_games_against_opp = [game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
+                                team_player_games_the_rest = [game for game in team_games_array if (game.player.name==player and game.game.home!=other_team and game.game.visitor!=other_team)]
 
 
-                            opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
-                            rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
+                                opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
+                                rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                            opponent_points_mean = mean([game.points for game in team_player_games_against_opp])
-                            rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
+                                opponent_points_mean = mean([game.points for game in team_player_games_against_opp])
+                                rest_points_mean = mean([game.points for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                            opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
-                            rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
+                                opponent_trb_mean = mean([game.trb for game in team_player_games_against_opp])
+                                rest_trb_mean = mean([game.trb for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
 
-                            player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 1
-                            player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 1
-                            player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 1
+                                player_assists_modifier = opponent_assists_mean/rest_assists_mean if rest_assists_mean > 0 else 1
+                                player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 1
+                                player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 1
 
-                            points_modifier_array.append(player_points_modifier)
-                            assists_modifier_array.append(player_assists_modifier)
-                            trb_modifier_array.append(player_trb_modifier)
-
+                                if player_points_modifier < 2:
+                                    points_modifier_array.append(player_points_modifier)
+                                else:
+                                    points_modifier_array.append(2)
+                                if player_assists_modifier < 2:
+                                    assists_modifier_array.append(player_assists_modifier)
+                                else:
+                                    assists_modifier_array.append(2)
+                                if player_trb_modifier < 2:
+                                    trb_modifier_array.append(player_trb_modifier)
+                                else:
+                                    trb_modifier_array.append(2)
                     
                     assists_modifier = round(mean(assists_modifier_array),2)
                     trb_modifier = round(mean(trb_modifier_array),2)
@@ -930,12 +941,12 @@ with app.app_context():
                     denominator = len(uniq_game_list)
                     if "points" in player_and_odds[1]:
                         points_teaser = player_and_odds[1]["points"]-1
-                        if points_teaser > 10:
-                            while points_teaser > 10:
+                        if points_teaser > 8:
+                            while points_teaser > 8:
                                 points_teaser -=.5
                                 if points_teaser in points_values:
                                     break
-                            if points_teaser > 9:
+                            if points_teaser > 7:
                                 points_teaser_less = points_values[points_values.index(points_teaser)-1]
                             else:
                                 points_teaser_less = points_teaser
@@ -944,7 +955,7 @@ with app.app_context():
 
                     if "assists" in player_and_odds[1]:
                         assists_teaser = player_and_odds[1]["assists"]-1.5
-                        if assists_teaser > 3:
+                        if assists_teaser > 2:
                             assists_teaser_less = assists_teaser-1
                         else:
                             assists_teaser_less = assists_teaser
@@ -952,7 +963,7 @@ with app.app_context():
 
                     if "rebounds" in player_and_odds[1]:
                         rebounds_teaser = player_and_odds[1]["rebounds"]-1.5
-                        if rebounds_teaser > 3:
+                        if rebounds_teaser > 2:
                             trb_teaser_less = rebounds_teaser-1
                         else:
                             trb_teaser_less = rebounds_teaser
@@ -962,25 +973,22 @@ with app.app_context():
                         if "points" in player_and_odds[1]:
                             if game.points > player_and_odds[1]["points"]:
                                 points_consistency +=1
-                            if points_teaser > 9:
-                                if game.points > points_teaser:
-                                    points_teaser_value+=1
+                            if game.points > points_teaser:
+                                points_teaser_value+=1
                         else:
                             points_consistency = .5*denominator
                         if "assists" in player_and_odds[1]:
                             if game.assists > player_and_odds[1]["assists"]:
                                 assists_consistency +=1
-                            if assists_teaser > 1:
-                                if game.assists > assists_teaser:
-                                    assists_teaser_value+=1
+                            if game.assists > assists_teaser:
+                                assists_teaser_value+=1
                         else:
                             assists_consistency = .5*(denominator)
                         if "rebounds" in player_and_odds[1]:
                             if game.trb > player_and_odds[1]["rebounds"]:
                                 trb_consistency +=1
-                            if rebounds_teaser > 3:
-                                if game.trb > rebounds_teaser:
-                                    trb_teaser_value+=1
+                            if game.trb > rebounds_teaser:
+                                trb_teaser_value+=1
                         else:
                             trb_consistency = .5*denominator
 
@@ -1005,8 +1013,7 @@ with app.app_context():
                         points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier*(points_consistency/2+.75),2)
                         trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*(trb_consistency/2+.75),2)
 
-
-                        if points_teaser_value > .7* denominator and points_teaser >=10 and points_predict > player_and_odds[1]["points"]:
+                        if points_teaser_value > .75* denominator and points_teaser >=8 and points_predict > player_and_odds[1]["points"]:
                             value = round(points_teaser_value/denominator,2)
                             high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict})
                         elif points_teaser_value == 0:
@@ -1017,12 +1024,12 @@ with app.app_context():
                                 if "points" in player_and_odds[1]:
                                     if game.points > points_teaser_less:
                                         points_teaser_less_value+=1
-                            if points_teaser_less_value > .75*denominator and points_teaser_less >= 10 and points_predict > player_and_odds[1]["points"]:
+                            if points_teaser_less_value > .75*denominator and points_teaser_less >= 8 and points_predict > player_and_odds[1]["points"]:
                                 value = round(points_teaser_less_value/denominator,2)
                                 low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less,"modifier":points_modifier,"proj":points_predict})
 
 
-                        if assists_teaser_value > .7* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
+                        if assists_teaser_value > .75* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
                             value = round(assists_teaser_value/denominator,2)
                             high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict})
                         elif assists_teaser_value == 0:
@@ -1033,13 +1040,14 @@ with app.app_context():
                                 if "points" in player_and_odds[1]:
                                     if game.assists > assists_teaser_less:
                                         assists_teaser_less_value+=1
-                            if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and points_predict > player_and_odds[1]["assists"]:
+                            if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and assists_predict > player_and_odds[1]["assists"]:
                                 value = round(assists_teaser_less_value/denominator,2)
                                 low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less,"modifier":assists_modifier,"proj":assists_predict})
 
-                        if trb_teaser_value > .7* denominator and rebounds_teaser >=4 and points_predict > player_and_odds[1]["rebounds"]:
-                            value = round(assists_teaser_value/denominator,2)
+                        if trb_teaser_value > .75* denominator and rebounds_teaser >=3 and trb_predict > player_and_odds[1]["rebounds"]:
+                            value = round(trb_teaser_value/denominator,2)
                             high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict})
+        
                         elif trb_teaser_value == 0:
                             pass
                         else:
@@ -1048,7 +1056,7 @@ with app.app_context():
                                 if "rebounds" in player_and_odds[1]:
                                     if game.trb > trb_teaser_less:
                                         trb_teaser_less_value+=1
-                            if trb_teaser_less_value > .75*denominator and trb_teaser_less >=4 and trb_predict > player_and_odds[1]["rebounds"]:
+                            if trb_teaser_less_value > .75*denominator and trb_teaser_less >=2 and trb_predict > player_and_odds[1]["rebounds"]:
                                 value = round(trb_teaser_less_value/denominator,2)
                                 low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less,"modifier":trb_modifier,"proj":trb_predict})
 
