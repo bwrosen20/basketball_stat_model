@@ -1013,9 +1013,9 @@ with app.app_context():
                         points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier*(points_consistency/2+.75),2)
                         trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*(trb_consistency/2+.75),2)
 
-                        if points_teaser_value > .75* denominator and points_teaser >=8 and points_predict > player_and_odds[1]["points"]:
+                        if points_teaser_value > .8* denominator and points_teaser >=8 and points_predict > player_and_odds[1]["points"]:
                             value = round(points_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict})
+                            high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator})
                         elif points_teaser_value == 0:
                             pass
                         else:
@@ -1026,12 +1026,12 @@ with app.app_context():
                                         points_teaser_less_value+=1
                             if points_teaser_less_value > .75*denominator and points_teaser_less >= 8 and points_predict > player_and_odds[1]["points"]:
                                 value = round(points_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less,"modifier":points_modifier,"proj":points_predict})
+                                low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less,"modifier":points_modifier,"proj":points_predict,"data_points":denominator})
 
 
-                        if assists_teaser_value > .75* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
+                        if assists_teaser_value > .8* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
                             value = round(assists_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict})
+                            high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator})
                         elif assists_teaser_value == 0:
                             pass
                         else:
@@ -1042,11 +1042,11 @@ with app.app_context():
                                         assists_teaser_less_value+=1
                             if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and assists_predict > player_and_odds[1]["assists"]:
                                 value = round(assists_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less,"modifier":assists_modifier,"proj":assists_predict})
+                                low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator})
 
-                        if trb_teaser_value > .75* denominator and rebounds_teaser >=3 and trb_predict > player_and_odds[1]["rebounds"]:
+                        if trb_teaser_value > .8* denominator and rebounds_teaser >=3 and trb_predict > player_and_odds[1]["rebounds"]:
                             value = round(trb_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict})
+                            high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator})
         
                         elif trb_teaser_value == 0:
                             pass
@@ -1058,7 +1058,7 @@ with app.app_context():
                                         trb_teaser_less_value+=1
                             if trb_teaser_less_value > .75*denominator and trb_teaser_less >=2 and trb_predict > player_and_odds[1]["rebounds"]:
                                 value = round(trb_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less,"modifier":trb_modifier,"proj":trb_predict})
+                                low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator})
 
                         assist_bet = "none"
                         trb_bet = "none"
@@ -1342,7 +1342,8 @@ with app.app_context():
         teaser = item["teaser"]
         modifier = item["modifier"]
         proj = item["proj"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj})")
+        data_points = item["data_points"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points})")
 
     print("\nLow value teasers\n")
 
@@ -1353,7 +1354,8 @@ with app.app_context():
         teaser = item["teaser"]
         modifier = item["modifier"]
         proj = item["proj"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj})")
+        data_points = item["data_points"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points})")
 
 
 
