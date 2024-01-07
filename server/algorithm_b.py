@@ -19,7 +19,8 @@ with app.app_context():
     time_doc = BeautifulSoup(time_page.text, 'html.parser')
     date_string = time_doc.select("#dd")[0].text
     time_string = time_doc.select('#clock')[0].text 
-    format_time = datetime.strptime(time_string,"%X%p").time()
+    format_time = datetime.strptime(time_string,"%I:%M:%S%p").time()
+
     #set current date to todays date and run the algorithm to see projections
     current_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
     # current_date = datetime(2023,11,27).date()
@@ -498,6 +499,7 @@ with app.app_context():
     triple_doubles = []
     high_value_teasers = []
     low_value_teasers = []
+    games_in_a_row = []
 
 
     for player_and_odds in new_odds_dict:
@@ -526,6 +528,8 @@ with app.app_context():
 
             # if player_team=="Milwaukee Bucks" or player_team=="Portland Trail Blazers":
             #     continue
+
+            # current_teams = ["Brooklyn Nets", "Portland Trail Blazers", "Cleveland Cavaliers","San Antonio Spurs"]
 
 
             if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
@@ -751,15 +755,15 @@ with app.app_context():
 
                 
 
-                    sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
-                    sorted_position_minutes.reverse()
+                    # sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
+                    # sorted_position_minutes.reverse()
 
-                    current_player_depth = 0
+                    # current_player_depth = 0
 
-                    for index,value in enumerate(sorted_position_minutes):
-                        if value[0]==player_name:
-                            current_player_depth=index+1
-                            break
+                    # for index,value in enumerate(sorted_position_minutes):
+                    #     if value[0]==player_name:
+                    #         current_player_depth=index+1
+                    #         break
 
 
                     
@@ -813,9 +817,13 @@ with app.app_context():
                     trb_modifier_array=[]
 
                 
-
+                    
+                    
                     for team in team_list:
 
+
+                        team_games_array = []
+                        uniq_players = []
                         team_games = Game.query.filter(or_(Game.visitor==team,Game.home==team))[-12:]
                         team_games_players = [game.players for game in team_games]
                         team_players = (list(itertools.chain.from_iterable(team_games_players)))
@@ -826,6 +834,8 @@ with app.app_context():
                         different_players = [{game.player.name:game.minutes} for game in position_player_games]
 
                         position_player_minutes = {}
+                        for name in uniq_position_player_names:
+                            uniq_players.append(name)
 
                         for player in uniq_position_player_names:
                             minutes_array = []
@@ -833,24 +843,31 @@ with app.app_context():
                                 for team_player,team_player_minutes in value.items():
                                     if player==team_player:
                                         minutes_array.append(team_player_minutes)
-                            position_player_minutes[player]=(mean(minutes_array))
+
+                            average = mean(minutes_array)
+                            error = average * .55
+                            for game in position_player_games:
+                                if game.player.name==player and average-error < game.minutes < average+error:
+                                    team_games_array.append(game)
 
                     
 
-                        sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
-                        sorted_position_minutes.reverse()
+                        # sorted_position_minutes = sorted(position_player_minutes.items(),key=lambda kv: (kv[1],kv[0]))
+                        # sorted_position_minutes.reverse()
 
 
-                        if (len(sorted_position_minutes)>0 and len(sorted_position_minutes)>=current_player_depth):
-                            same_position_player = sorted_position_minutes[current_player_depth-1][0]
+                        # if (len(sorted_position_minutes)>0 and len(sorted_position_minutes)>=current_player_depth):
+                    # same_position_player = sorted_position_minutes[current_player_depth-1][0]
 
 
-                            player_object = Player.query.filter(Player.name==same_position_player).first()
+                        for player in uniq_players:
+                            player_object = Player.query.filter(Player.name==player).first()
 
                             if len([game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)])>0:
 
                                 team_player_games_against_opp = [game for game in player_object.games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
-                                team_player_games_the_rest = [game for game in player_object.games if (game.game.home!=other_team and game.game.visitor!=other_team)][-20:]
+                                team_player_games_the_rest = [game for game in team_games_array if (game.player.name==player and game.game.home!=other_team and game.game.visitor!=other_team)]
+
 
                                 opponent_assists_mean = mean([game.assists for game in team_player_games_against_opp])
                                 rest_assists_mean = mean([game.assists for game in team_player_games_the_rest]) if len(team_player_games_the_rest)>0 else 1
@@ -865,10 +882,18 @@ with app.app_context():
                                 player_points_modifier = opponent_points_mean/rest_points_mean if rest_points_mean > 0 else 1
                                 player_trb_modifier = opponent_trb_mean/rest_trb_mean if rest_trb_mean > 0 else 1
 
-                                points_modifier_array.append(player_points_modifier)
-                                assists_modifier_array.append(player_assists_modifier)
-                                trb_modifier_array.append(player_trb_modifier)
-
+                                if player_points_modifier < 2:
+                                    points_modifier_array.append(player_points_modifier)
+                                else:
+                                    points_modifier_array.append(2)
+                                if player_assists_modifier < 2:
+                                    assists_modifier_array.append(player_assists_modifier)
+                                else:
+                                    assists_modifier_array.append(2)
+                                if player_trb_modifier < 2:
+                                    trb_modifier_array.append(player_trb_modifier)
+                                else:
+                                    trb_modifier_array.append(2)
                     
                     assists_modifier = round(mean(assists_modifier_array),2)
                     trb_modifier = round(mean(trb_modifier_array),2)
@@ -879,7 +904,6 @@ with app.app_context():
 
 
                     #make a big array of games
-                    latest_home_or_away_games.extend(latest_games)
                     latest_home_or_away_games.extend(games_at_time)
                     latest_home_or_away_games.extend(games_vs_opponent)
                     if injury:
@@ -914,84 +938,78 @@ with app.app_context():
                     points_teaser_value = 0
                     trb_teaser_value = 0
 
+                    points_values = [8,10,12,15,18,20,25,30]
+
                     denominator = len(uniq_game_list)
                     if "points" in player_and_odds[1]:
-                        points_teaser = player_and_odds[1]["points"]-2
-                        if points_teaser > 10:
-                            while points_teaser > 10:
+                        points_teaser = player_and_odds[1]["points"]-1
+                        if points_teaser > 8:
+                            while points_teaser > 8:
                                 points_teaser -=.5
-                                if points_teaser%5==0:
+                                if points_teaser in points_values:
                                     break
-                            if points_teaser > 14:
-                                points_teaser_less = points_teaser-5
+                            if points_teaser > 7:
+                                points_teaser_less = points_values[points_values.index(points_teaser)-1]
                             else:
                                 points_teaser_less = points_teaser
                         else:
                             points_teaser_less = points_teaser
 
                     if "assists" in player_and_odds[1]:
-                        assists_teaser = player_and_odds[1]["assists"]
+                        assists_teaser = player_and_odds[1]["assists"]-1.5
+                        if assists_teaser > 10:
+                            assists_teaser = 10
                         if assists_teaser > 2:
-                            while assists_teaser > 2:
-                                assists_teaser -=.5
-                                if assists_teaser%2==0:
-                                    break
-                            if assists_teaser > 3:
-                                assists_teaser_less = assists_teaser-2
-                            else:
-                                assists_teaser_less = assists_teaser
+                            assists_teaser_less = assists_teaser-1
                         else:
                             assists_teaser_less = assists_teaser
+                        
+                    
 
                     if "rebounds" in player_and_odds[1]:
-                        rebounds_teaser = player_and_odds[1]["rebounds"]
-                        if rebounds_teaser > 4:
-                            while rebounds_teaser > 4:
-                                rebounds_teaser -=.5
-                                if rebounds_teaser%2==0:
-                                    break
-                            if rebounds_teaser > 5:
-                                trb_teaser_less = rebounds_teaser-2
-                            else:
-                                trb_teaser_less = rebounds_teaser
+                        rebounds_teaser = player_and_odds[1]["rebounds"]-1.5
+                        if rebounds_teaser > 10:
+                            rebounds_teaser = 10
+                        if rebounds_teaser > 2:
+                            trb_teaser_less = rebounds_teaser-1
                         else:
                             trb_teaser_less = rebounds_teaser
+                
 
                     for game in uniq_game_list:
                         if "points" in player_and_odds[1]:
                             if game.points > player_and_odds[1]["points"]:
                                 points_consistency +=1
-                            if points_teaser > 9:
-                                if game.points > points_teaser:
-                                    points_teaser_value+=1
+                            if game.points > points_teaser:
+                                points_teaser_value+=1
                         else:
                             points_consistency = .5*denominator
                         if "assists" in player_and_odds[1]:
                             if game.assists > player_and_odds[1]["assists"]:
                                 assists_consistency +=1
-                            if assists_teaser > 1:
-                                if game.assists > assists_teaser:
-                                    assists_teaser_value+=1
+                            if game.assists > assists_teaser:
+                                assists_teaser_value+=1
                         else:
                             assists_consistency = .5*(denominator)
                         if "rebounds" in player_and_odds[1]:
                             if game.trb > player_and_odds[1]["rebounds"]:
                                 trb_consistency +=1
-                            if rebounds_teaser > 3:
-                                if game.trb > rebounds_teaser:
-                                    trb_teaser_value+=1
+                            if game.trb > rebounds_teaser:
+                                trb_teaser_value+=1
                         else:
                             trb_consistency = .5*denominator
 
 
 
-                    points_consistency = points_consistency/denominator*2
-                    assists_consistency = assists_consistency/denominator*2
-                    trb_consistency = trb_consistency/denominator*2
+                    points_consistency = points_consistency/denominator
+                    assists_consistency = assists_consistency/denominator
+                    trb_consistency = trb_consistency/denominator
 
 
                     if denominator > 0:
 
+                        recent_games = current_player.games[-40:]
+                        recent_games.reverse()
 
                         assists_list = [game.assists for game in uniq_game_list]
                         points_list = [game.points for game in uniq_game_list]
@@ -1001,13 +1019,49 @@ with app.app_context():
                         points_factor = mean(points_list)
                         trb_factor = mean(trb_list)
 
-                        assists_predict = round((0.6*assists_factor+0.4*assists_similar)*assists_modifier*assists_consistency,2)
-                        points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier*points_consistency,2)
-                        trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*trb_consistency,2)
+                        assists_predict = round((0.6*assists_factor+0.4*assists_similar)*assists_modifier*(assists_consistency/2+.75),2)
+                        points_predict = round((0.6*points_factor+0.4*points_similar)*points_modifier*(points_consistency/2+.75),2)
+                        trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*(trb_consistency/2+.75),2)
 
-                        if points_teaser_value > .8* denominator and points_teaser >=10 and points_predict > points_teaser:
+
+                        points_games_in_a_row = 0
+                        for game in recent_games:
+                                if game.points >= points_teaser:
+                                    points_games_in_a_row+=1
+                                else:
+                                    break
+
+                        assists_games_in_a_row = 0
+                        for game in recent_games:
+                                if game.assists >=assists_teaser:
+                                    assists_games_in_a_row+=1
+                                else:
+                                    break
+
+                        rebounds_games_in_a_row = 0
+                        for game in recent_games:
+                                if game.trb >= rebounds_teaser:
+                                    rebounds_games_in_a_row+=1
+                                else:
+                                    break
+
+
+
+                        if points_teaser > 7:
                             value = round(points_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator})
+                            games_in_a_row.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":points_games_in_a_row,"total_value":round((.45*value+.4*points_modifier+.15*points_games_in_a_row/25),2)})
+                        if assists_teaser > 1:
+                            value = round(assists_teaser_value/denominator,2)
+                            games_in_a_row.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":assists_games_in_a_row,"total_value":round((.45*value+.4*assists_modifier+.15*assists_games_in_a_row/25),2)})
+                        if rebounds_teaser > 3:
+                            value = round(trb_teaser_value/denominator,2)
+                            games_in_a_row.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":rebounds_games_in_a_row,"total_value":round((.45*value+.4*trb_modifier+.15*rebounds_games_in_a_row/25),2)})
+
+
+                        if points_teaser_value > .8* denominator and points_teaser >=8 and points_predict > player_and_odds[1]["points"]:
+                            value = round(points_teaser_value/denominator,2)
+                            player_object = {"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":points_games_in_a_row}
+                            high_value_teasers.append(player_object)
                         elif points_teaser_value == 0:
                             pass
                         else:
@@ -1016,14 +1070,21 @@ with app.app_context():
                                 if "points" in player_and_odds[1]:
                                     if game.points > points_teaser_less:
                                         points_teaser_less_value+=1
-                            if points_teaser_less_value > .75*denominator and points_teaser_less >= 10 and points_predict > points_teaser:
+                            if points_teaser_less_value > .75*denominator and points_teaser_less >= 8 and points_predict > player_and_odds[1]["points"]:
                                 value = round(points_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less,"modifier":points_modifier,"proj":points_predict,"data_points":denominator})
+                                games_straight = 0
+                                for game in recent_games:
+                                    if game.points > points_teaser_less:
+                                        games_straight+=1
+                                    else:
+                                        break
+                                player_object = {"name":player_name,"prop":"points","value":value,"teaser":points_teaser_less,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":games_straight}
+                                low_value_teasers.append(player_object)
 
-
-                        if assists_teaser_value > .8* denominator and assists_teaser >=2 and assists_predict > assists_teaser:
+                        if assists_teaser_value > .8* denominator and assists_teaser >=2 and points_predict > player_and_odds[1]["assists"]:
                             value = round(assists_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator})
+                            player_object = {"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":assists_games_in_a_row}
+                            high_value_teasers.append(player_object)
                         elif assists_teaser_value == 0:
                             pass
                         else:
@@ -1032,27 +1093,42 @@ with app.app_context():
                                 if "points" in player_and_odds[1]:
                                     if game.assists > assists_teaser_less:
                                         assists_teaser_less_value+=1
-                            if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and assists_predict > assists_teaser:
+                            if assists_teaser_less_value > .75*denominator and assists_teaser_less >=2 and assists_predict > player_and_odds[1]["assists"]:
                                 value = round(assists_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator})
+                                games_straight = 0
+                                for game in recent_games:
+                                    if game.assists > assists_teaser_less:
+                                        games_straight+=1
+                                    else:
+                                        break
+                                player_object = {"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser_less,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":games_straight}
+                                low_value_teasers.append(player_object)
 
-                        if trb_teaser_value > .8* denominator and rebounds_teaser >=4 and trb_predict > rebounds_teaser:
-                            value = round(assists_teaser_value/denominator,2)
-                            high_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator})
+                        if trb_teaser_value > .8* denominator and rebounds_teaser >=3 and trb_predict > player_and_odds[1]["rebounds"]:
+                            value = round(trb_teaser_value/denominator,2)
+                            
+                            player_object = {"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":rebounds_games_in_a_row}
+                            high_value_teasers.append(player_object)
+        
                         elif trb_teaser_value == 0:
                             pass
                         else:
                             trb_teaser_less_value = 0
                             for game in uniq_game_list:
-                                if "points" in player_and_odds[1]:
+                                if "rebounds" in player_and_odds[1]:
                                     if game.trb > trb_teaser_less:
                                         trb_teaser_less_value+=1
-                            if trb_teaser_less_value > .75*denominator and trb_teaser_less >=4 and trb_predict > rebounds_teaser:
+                            if trb_teaser_less_value > .75*denominator and trb_teaser_less >=2 and trb_predict > player_and_odds[1]["rebounds"]:
                                 value = round(trb_teaser_less_value/denominator,2)
-                                low_value_teasers.append({"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator})
+                                games_straight = 0
+                                for game in recent_games:
+                                    if game.trb > trb_teaser_less:
+                                        games_straight+=1
+                                    else:
+                                        break
+                                player_object = {"name":player_name,"prop":"rebounds","value":value,"teaser":trb_teaser_less,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":games_straight}
+                                low_value_teasers.append(player_object)
 
-
-                        
                         assist_bet = "none"
                         trb_bet = "none"
                         points_bet = "none"
@@ -1255,21 +1331,25 @@ with app.app_context():
                 print(f"Points Multipler: {round(points_modifier,2)}")
                 print(f"Assists Multipler: {round(assists_modifier,2)}")
                 print(f"Trb Multipler: {round(trb_modifier,2)}")
-                print(f"Points Consistency: {round(points_consistency,2)}")
-                print(f"Assists Consistency: {round(assists_consistency,2)}")
-                print(f"Trb Consistency: {round(trb_consistency,2)}\n")
+                print(f"Points Consistency: {round(points_consistency/2+.75,2)}")
+                print(f"Assists Consistency: {round(assists_consistency/2+.75,2)}")
+                print(f"Trb Consistency: {round(trb_consistency/2+.75,2)}\n")
                 if points_predict>9.8 and assists_predict>9.8 and trb_predict>9.8:
                     triple_doubles.append(player_name)
                 if ((points_predict>9.8 and assists_predict>9.8) or (assists_predict>9.8 and trb_predict>9.8) or (points_predict>9.8 and trb_predict>9.8)):
                     double_doubles.append(player_name)
 
-                consistency.append({"name":player_name,"stat":"assists","value":round(assists_consistency,2)})
-                consistency.append({"name":player_name,"stat":"points","value":round(points_consistency,2)})
-                consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2)})
+
+                if "assists" in player_and_odds[1] and assists_predict > player_and_odds[1]["assists"]:
+                    consistency.append({"name":player_name,"stat":"assists","value":round(assists_consistency,2),"line":player_and_odds[1]["assists"]}) 
+                if "points" in player_and_odds[1]and points_predict > player_and_odds[1]["points"]:
+                    consistency.append({"name":player_name,"stat":"points","value":round(points_consistency,2),"line":player_and_odds[1]["points"]}) 
+                if "rebounds" in player_and_odds[1] and trb_predict > player_and_odds[1]["rebounds"]:
+                    consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2),"line":player_and_odds[1]["rebounds"]}) 
+
 
 
     
-
 
     sorted_consistency = sorted(consistency,key=itemgetter('value'))
     lowest_consistency = sorted_consistency[0:10]
@@ -1284,6 +1364,8 @@ with app.app_context():
 
     sorted_bets = sorted(bets,key=itemgetter('perc'))[-10:]
     sort_by_diff = sorted(bets,key=itemgetter('diff'))[-10:]
+    sorted_by_games_straight = sorted(games_in_a_row,key=itemgetter('total_value'))[-20:]
+    sorted_by_games_straight.reverse()
         
     for item in sorted_bets:
         name = item["name"]
@@ -1310,7 +1392,8 @@ with app.app_context():
         name=item["name"]
         stat = item["stat"]
         value = item["value"]
-        print(f"{name} {stat}: {value}")
+        line = item["line"]
+        print(f"{name} {line} {stat}: {value}")
 
     print("\nBets with highest consistency")
 
@@ -1318,7 +1401,8 @@ with app.app_context():
         name=item["name"]
         stat = item["stat"]
         value = item["value"]
-        print(f"{name} {stat}: {value}")
+        line = item["line"]
+        print(f"{name} {line} {stat}: {value}")
 
     print("\nHigh value teasers\n")
 
@@ -1330,7 +1414,8 @@ with app.app_context():
         modifier = item["modifier"]
         proj = item["proj"]
         data_points = item["data_points"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points})")
+        games_straight = item["games_straight"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
     print("\nLow value teasers\n")
 
@@ -1342,7 +1427,23 @@ with app.app_context():
         modifier = item["modifier"]
         proj = item["proj"]
         data_points = item["data_points"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points})")
+        games_straight = item["games_straight"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
+
+
+    print("\nMost Games in a Row\n")
+
+    for item in sorted_by_games_straight:
+        name=item["name"]
+        prop = item["prop"]
+        value = item["value"]
+        teaser = item["teaser"]
+        modifier = item["modifier"]
+        proj = item["proj"]
+        data_points = item["data_points"]
+        games_straight = item["games_straight"]
+        total_value = item["total_value"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight}, Total Value:{total_value})")
 
 
 
@@ -1355,6 +1456,7 @@ with app.app_context():
         if team in list_of_teams:
             print(f"{team}: {injuries}")
 
-    print('Algo B')
+    print("\nAlgo A")
 
             
+
