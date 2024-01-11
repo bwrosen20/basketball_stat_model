@@ -942,7 +942,7 @@ with app.app_context():
 
                     denominator = len(uniq_game_list)
                     if "points" in player_and_odds[1]:
-                        points_teaser = player_and_odds[1]["points"]-1
+                        points_teaser = player_and_odds[1]["points"]-1.5
                         if points_teaser > 8:
                             while points_teaser > 8:
                                 points_teaser -=.5
@@ -957,8 +957,6 @@ with app.app_context():
 
                     if "assists" in player_and_odds[1]:
                         assists_teaser = player_and_odds[1]["assists"]-1.5
-                        if assists_teaser > 10:
-                            assists_teaser = 10
                         if assists_teaser > 2:
                             assists_teaser_less = assists_teaser-1
                         else:
@@ -968,8 +966,6 @@ with app.app_context():
 
                     if "rebounds" in player_and_odds[1]:
                         rebounds_teaser = player_and_odds[1]["rebounds"]-1.5
-                        if rebounds_teaser > 10:
-                            rebounds_teaser = 10
                         if rebounds_teaser > 2:
                             trb_teaser_less = rebounds_teaser-1
                         else:
@@ -1024,35 +1020,39 @@ with app.app_context():
                         trb_predict = round((0.6*trb_factor+0.4*trb_similar)*trb_modifier*(trb_consistency/2+.75),2)
 
 
-                        points_games_in_a_row = 0
-                        for game in recent_games:
-                                if game.points >= points_teaser:
-                                    points_games_in_a_row+=1
-                                else:
-                                    break
+                        if "points" in player_and_odds[1]:
+                            points_games_in_a_row = 0
+                            for game in recent_games:
+                                    if game.points >= points_teaser:
+                                        points_games_in_a_row+=1
+                                    else:
+                                        break
+                            if points_teaser > 7:
+                                value = round(points_teaser_value/denominator,2)
+                                games_in_a_row.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":points_games_in_a_row,"total_value":round((.5*value+.35*points_modifier+.15*points_games_in_a_row/15),2)})
 
-                        assists_games_in_a_row = 0
-                        for game in recent_games:
-                                if game.assists >=assists_teaser:
-                                    assists_games_in_a_row+=1
-                                else:
-                                    break
-
-                        rebounds_games_in_a_row = 0
-                        for game in recent_games:
-                                if game.trb >= rebounds_teaser:
-                                    rebounds_games_in_a_row+=1
-                                else:
-                                    break
+                        if "assists" in player_and_odds[1]:            
+                            assists_games_in_a_row = 0
+                            for game in recent_games:
+                                    if game.assists >=assists_teaser:
+                                        assists_games_in_a_row+=1
+                                    else:
+                                        break
+                            if assists_teaser > 1:
+                                value = round(assists_teaser_value/denominator,2)
+                                games_in_a_row.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":assists_games_in_a_row,"total_value":round((.5*value+.35*assists_modifier+.15*assists_games_in_a_row/15),2)})
 
 
-
-                        if points_games_in_a_row>5 and points_teaser > 7:
-                            games_in_a_row.append({"name":player_name,"prop":"points","value":round(points_teaser_value/denominator,2),"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":points_games_in_a_row})
-                        if assists_games_in_a_row>5 and assists_teaser > 1:
-                            games_in_a_row.append({"name":player_name,"prop":"assists","value":round(assists_teaser_value/denominator,2),"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":assists_games_in_a_row})
-                        if rebounds_games_in_a_row>5 and rebounds_teaser > 3:
-                            games_in_a_row.append({"name":player_name,"prop":"rebounds","value":round(trb_teaser_value/denominator,2),"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":rebounds_games_in_a_row})
+                        if "rebounds" in player_and_odds[1]:
+                            rebounds_games_in_a_row = 0
+                            for game in recent_games:
+                                    if game.trb >= rebounds_teaser:
+                                        rebounds_games_in_a_row+=1
+                                    else:
+                                        break
+                            if rebounds_teaser > 2:
+                                value = round(trb_teaser_value/denominator,2)
+                                games_in_a_row.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":rebounds_games_in_a_row,"total_value":round((.5*value+.35*trb_modifier+.15*rebounds_games_in_a_row/15),2)})
 
 
                         if points_teaser_value > .8* denominator and points_teaser >=8 and points_predict > player_and_odds[1]["points"]:
@@ -1346,6 +1346,8 @@ with app.app_context():
 
 
 
+    
+
     sorted_consistency = sorted(consistency,key=itemgetter('value'))
     lowest_consistency = sorted_consistency[0:10]
     highest_consistency = sorted_consistency[-10:]
@@ -1359,8 +1361,11 @@ with app.app_context():
 
     sorted_bets = sorted(bets,key=itemgetter('perc'))[-10:]
     sort_by_diff = sorted(bets,key=itemgetter('diff'))[-10:]
+    sorted_by_total_value = sorted(games_in_a_row,key=itemgetter('total_value'))[-20:]
+    sorted_by_total_value.reverse()
     sorted_by_games_straight = sorted(games_in_a_row,key=itemgetter('games_straight'))[-20:]
     sorted_by_games_straight.reverse()
+    sorted_by_games_straight = [item for item in sorted_by_games_straight if item["games_straight"]>4]
         
     for item in sorted_bets:
         name = item["name"]
@@ -1441,6 +1446,22 @@ with app.app_context():
 
 
 
+    print("\nRanked by Total Value\n")
+
+    for item in sorted_by_total_value:
+        name=item["name"]
+        prop = item["prop"]
+        value = item["value"]
+        teaser = item["teaser"]
+        modifier = item["modifier"]
+        proj = item["proj"]
+        data_points = item["data_points"]
+        games_straight = item["games_straight"]
+        total_value = item["total_value"]
+        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight}, Total Value:{total_value})")
+
+
+
     print(f"\nDouble Doubles: {double_doubles}")
     print(f"Triple Doubles: {triple_doubles}\n")
 
@@ -1451,6 +1472,7 @@ with app.app_context():
             print(f"{team}: {injuries}")
 
     print("\nAlgo A")
+    print(time_string)
 
             
 
