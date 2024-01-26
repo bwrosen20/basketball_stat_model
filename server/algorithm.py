@@ -1,5 +1,5 @@
 from app import *
-from statistics import mean,mode
+from statistics import mean,mode,median
 from bs4 import BeautifulSoup
 from datetime import datetime, date, timedelta
 from operator import itemgetter
@@ -505,19 +505,20 @@ with app.app_context():
     for player_and_odds in new_odds_dict:
 
         player_name = player_and_odds[0]
-
-        
         
         #collect my own data about every game they've played in
         
         current_player = Player.query.filter(Player.name==player_name).first()
 
-        latest_minutes_list = [game.minutes for game in current_player.games[-10:]]
-        latest_minutes = mean(latest_minutes_list)
-
+        
         if current_player:    
+
+            latest_minutes_list = [game.minutes for game in current_player.games[-10:]]
+            latest_minutes = mean(latest_minutes_list)
+
             games_to_use = current_player.games
             
+
 
             last_game = games_to_use[-1]
 
@@ -532,7 +533,9 @@ with app.app_context():
             # current_teams = ["Brooklyn Nets", "Portland Trail Blazers", "Cleveland Cavaliers","San Antonio Spurs"]
 
 
-            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
+            specific_time = datetime(2024,1,21,16,30,00)
+
+            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time) and specific_time.time() < [game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0]:
 
                 print(f"{player_name} ({player_team})")
 
@@ -926,8 +929,15 @@ with app.app_context():
 
                     uniq_game_list = list(new_game_list)
 
+                    
 
-                    uniq_game_list = [game for game in uniq_game_list]
+
+                    uniq_game_list_prime = [game for game in uniq_game_list]
+
+                    minutes_medium = median(game.minutes for game in uniq_game_list)
+                    comparison_value = minutes_medium*.3
+
+                    uniq_game_list = [game for game in uniq_game_list_prime if (minutes_medium - comparison_value) < game.minutes < (minutes_medium + comparison_value)]
 
 
                     assists_consistency = 0
@@ -1353,7 +1363,7 @@ with app.app_context():
     highest_consistency = sorted_consistency[-10:]
     highest_consistency.reverse()
 
-    sorted_high_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))[-10:]
+    sorted_high_value_teasers = sorted(high_value_teasers,key=itemgetter('value'))[-20:]
     sorted_high_value_teasers.reverse()
 
     sorted_low_value_teasers = sorted(low_value_teasers,key=itemgetter('value'))[-10:]
@@ -1362,6 +1372,7 @@ with app.app_context():
     sorted_bets = sorted(bets,key=itemgetter('perc'))[-10:]
     sort_by_diff = sorted(bets,key=itemgetter('diff'))[-10:]
     sorted_by_total_value = sorted(games_in_a_row,key=itemgetter('total_value'))[-20:]
+    sorted_by_total_value = [item for item in sorted_by_total_value if item["total_value"]>=.8]
     sorted_by_total_value.reverse()
     sorted_by_games_straight = sorted(games_in_a_row,key=itemgetter('games_straight'))[-20:]
     sorted_by_games_straight.reverse()
@@ -1406,7 +1417,7 @@ with app.app_context():
 
     print("\nHigh value teasers\n")
 
-    for item in sorted_high_value_teasers:
+    for index, item in enumerate(sorted_high_value_teasers):
         name=item["name"]
         prop = item["prop"]
         value = item["value"]
@@ -1415,11 +1426,11 @@ with app.app_context():
         proj = item["proj"]
         data_points = item["data_points"]
         games_straight = item["games_straight"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
+        print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
     print("\nLow value teasers\n")
 
-    for item in sorted_low_value_teasers:
+    for index, item in enumerate(sorted_low_value_teasers):
         name=item["name"]
         prop = item["prop"]
         value = item["value"]
@@ -1428,12 +1439,12 @@ with app.app_context():
         proj = item["proj"]
         data_points = item["data_points"]
         games_straight = item["games_straight"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
+        print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
 
     print("\nMost Games in a Row\n")
 
-    for item in sorted_by_games_straight:
+    for index, item in enumerate(sorted_by_games_straight):
         name=item["name"]
         prop = item["prop"]
         value = item["value"]
@@ -1442,13 +1453,13 @@ with app.app_context():
         proj = item["proj"]
         data_points = item["data_points"]
         games_straight = item["games_straight"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
+        print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
 
 
     print("\nRanked by Total Value\n")
 
-    for item in sorted_by_total_value:
+    for index, item in enumerate(sorted_by_total_value):
         name=item["name"]
         prop = item["prop"]
         value = item["value"]
@@ -1458,7 +1469,7 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
         total_value = item["total_value"]
-        print(f"{name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight}, Total Value:{total_value})")
+        print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight}, Total Value:{total_value})")
 
 
 
