@@ -135,13 +135,15 @@ with app.app_context():
     #collect injury dictionary
     injured_list = {}
 
+
     for injured in injury_page:
         team_name = injured.select('.Table__Title')[0].text
         
         players = injured.select('tbody')[0].select('tr')
         injured_players = []
         for player in players:
-            if player.select('td')[3].text=='Out':
+            player_info = player.select('td')[4].text
+            if player.select('td')[3].text=='Out' and "is expected to be cleared" not in player_info and "will play" not in player_info:
                 injured_players.append(player.select('td')[0].text)
                 
         injured_list[team_name] = injured_players
@@ -533,9 +535,10 @@ with app.app_context():
             current_teams = ["Brooklyn Nets", "Houston Rockets"]
 
 
-            specific_time = datetime(2024,1,21,16,30,00)
+            # specific_time = datetime(2024,1,21,16,30,00)
+            #and specific_time.time() < [game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0]
 
-            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time) and specific_time.time() < [game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0]:
+            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
 
                 print(f"{player_name} ({player_team})")
 
@@ -946,7 +949,7 @@ with app.app_context():
 
                     denominator = len(uniq_game_list)
                     if "points" in player_and_odds[1]:
-                        points_teaser = player_and_odds[1]["points"]-2
+                        points_teaser = player_and_odds[1]["points"]-1.5
                         if points_teaser > 8:
                             while points_teaser > 8:
                                 points_teaser -=.5
@@ -1033,7 +1036,7 @@ with app.app_context():
                                         break
                             if points_teaser > 7:
                                 value = round(points_teaser_value/denominator,2)
-                                games_in_a_row.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":points_games_in_a_row,"total_value":round((.5*value+.35*points_modifier+.15*points_games_in_a_row/15),2)})
+                                games_in_a_row.append({"name":player_name,"prop":"points","value":value,"teaser":points_teaser,"modifier":points_modifier,"proj":points_predict,"data_points":denominator,"games_straight":points_games_in_a_row,"total_value":round((.4*value+.45*points_modifier+.15*points_games_in_a_row/15),2)})
 
                         if "assists" in player_and_odds[1]:            
                             assists_games_in_a_row = 0
@@ -1044,7 +1047,7 @@ with app.app_context():
                                         break
                             if assists_teaser > 1:
                                 value = round(assists_teaser_value/denominator,2)
-                                games_in_a_row.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":assists_games_in_a_row,"total_value":round((.5*value+.35*assists_modifier+.15*assists_games_in_a_row/15),2)})
+                                games_in_a_row.append({"name":player_name,"prop":"assists","value":value,"teaser":assists_teaser,"modifier":assists_modifier,"proj":assists_predict,"data_points":denominator,"games_straight":assists_games_in_a_row,"total_value":round((.4*value+.45*assists_modifier+.15*assists_games_in_a_row/15),2)})
 
 
                         if "rebounds" in player_and_odds[1]:
@@ -1056,7 +1059,7 @@ with app.app_context():
                                         break
                             if rebounds_teaser > 2:
                                 value = round(trb_teaser_value/denominator,2)
-                                games_in_a_row.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":rebounds_games_in_a_row,"total_value":round((.5*value+.35*trb_modifier+.15*rebounds_games_in_a_row/15),2)})
+                                games_in_a_row.append({"name":player_name,"prop":"rebounds","value":value,"teaser":rebounds_teaser,"modifier":trb_modifier,"proj":trb_predict,"data_points":denominator,"games_straight":rebounds_games_in_a_row,"total_value":round((.4*value+.45*trb_modifier+.15*rebounds_games_in_a_row/15),2)})
 
 
                         if points_teaser_value > .8* denominator and points_teaser >=8 and points_predict > player_and_odds[1]["points"]:

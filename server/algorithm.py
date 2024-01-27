@@ -19,6 +19,7 @@ with app.app_context():
     time_doc = BeautifulSoup(time_page.text, 'html.parser')
     date_string = time_doc.select("#dd")[0].text
     time_string = time_doc.select('#clock')[0].text 
+    # ipdb.set_trace()
     format_time = datetime.strptime(time_string,"%I:%M:%S%p").time()
 
     #set current date to todays date and run the algorithm to see projections
@@ -533,9 +534,10 @@ with app.app_context():
             # current_teams = ["Brooklyn Nets", "Portland Trail Blazers", "Cleveland Cavaliers","San Antonio Spurs"]
 
 
-            specific_time = datetime(2024,1,21,16,30,00)
+            # specific_time = datetime(2024,1,21,16,30,00)
+            #and specific_time.time() < [game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0]
 
-            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time) and specific_time.time() < [game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0]:
+            if player_team in list_of_teams and ([game["time"] for game in todays_games if game["home"]==player_team or game["away"]==player_team][0] > format_time):
 
                 print(f"{player_name} ({player_team})")
 
