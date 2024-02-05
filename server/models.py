@@ -50,6 +50,26 @@ class Player(db.Model, SerializerMixin):
         return f'<{self.name}>'
 
 
+class FinalBet(db.Model, SerializerMixin):
+    # __tablename__ = 'players'
+
+    # serialize_rules = ('-game.players', '-team.players',)
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    category = db.Column(db.String)
+    category_value = db.Column(db.Integer)
+    date = db.Column(db.DateTime)
+    prop = db.Column(db.String)
+    line = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+    
+
+    def __repr__(self):
+        return f'<{self.category} {self.category_value}: {self.name} {self.line} {self.prop}>'
+
+
 class PlayerGame(db.Model, SerializerMixin):
     # __tablename__ = 'player_games'
 

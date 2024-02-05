@@ -48,6 +48,105 @@ with app.app_context():
 
     if most_recent_game_date != yesterday:
         scrape_a_day(yesterday,month_of_yesterday,year_of_yesterday)
+        # yesterdays_bets = FinalBets.query.filter(FinalBet.date==yesterday).all()
+        # high_value = sorted([bet for bet in yesterdays_bets if bet.category=="high_value"],key=itemgetter('category_value'))
+        # low_value = sorted([bet for bet in yesterdays_bets if bet.category=="low_value"],key=itemgetter('category_value'))
+        # total_value = sorted([bet for bet in yesterdays_bets if bet.category=="total_value"],key=itemgetter('category_value'))
+        # games_in_a_row = sorted([bet for bet in yesterdays_bets if bet.category=="games_in_a_row"],key=itemgetter('category_value'))
+
+        # print("\nHigh value teasers\n")
+        # for index, item in enumerate(high_value):
+        #     name = item["name"]
+        #     prop = item["prop"]
+        #     teaser = item["teaser"]
+        #     if prop=="rebounds":
+        #         new_prop="trb"
+        #     else:
+        #         new_prop=prop
+        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
+        #     if len(players_game_list) > 0:
+        #         player_who_played = players_game_list.first()
+        #         actual_score = player_who_played.new_prop
+        #         if actual_score > teaser:
+        #             did_they_do_it = "Yes"
+        #         else:
+        #             did_they_do_it = "No"
+        #     else:
+        #         did_they_do_it = "Didn't play"
+        #         actual_score = "NA"
+
+        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+
+        # print("\nLow value teasers\n")
+        # for index, item in enumerate(low_value):
+        #     name = item["name"]
+        #     prop = item["prop"]
+        #     teaser = item["teaser"]
+        #     if prop=="rebounds":
+        #         new_prop="trb"
+        #     else:
+        #         new_prop=prop
+        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
+        #     if len(players_game_list) > 0:
+        #         player_who_played = players_game_list.first()
+        #         actual_score = player_who_played.new_prop
+        #         if actual_score > teaser:
+        #             did_they_do_it = "Yes"
+        #         else:
+        #             did_they_do_it = "No"
+        #     else:
+        #         did_they_do_it = "Didn't play"
+        #         actual_score = "NA"
+
+        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+
+        # print("\nTotal value\n")
+        # for index, item in enumerate(total_value):
+        #     name = item["name"]
+        #     prop = item["prop"]
+        #     teaser = item["teaser"]
+        #     if prop=="rebounds":
+        #         new_prop="trb"
+        #     else:
+        #         new_prop=prop
+        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
+        #     if len(players_game_list) > 0:
+        #         player_who_played = players_game_list.first()
+        #         actual_score = player_who_played.new_prop
+        #         if actual_score > teaser:
+        #             did_they_do_it = "Yes"
+        #         else:
+        #             did_they_do_it = "No"
+        #     else:
+        #         did_they_do_it = "Didn't play"
+        #         actual_score = "NA"
+
+        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+
+
+        # print("\nGames in a Row\n")
+        # for index, item in enumerate(games_in_a_row):
+        #     name = item["name"]
+        #     prop = item["prop"]
+        #     teaser = item["teaser"]
+        #     if prop=="rebounds":
+        #         new_prop="trb"
+        #     else:
+        #         new_prop=prop
+        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
+        #     if len(players_game_list) > 0:
+        #         player_who_played = players_game_list.first()
+        #         actual_score = player_who_played.new_prop
+        #         if actual_score > teaser:
+        #             did_they_do_it = "Yes"
+        #         else:
+        #             did_they_do_it = "No"
+        #     else:
+        #         did_they_do_it = "Didn't play"
+        #         actual_score = "NA"
+
+        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+
     else:
         print("All games have been downloaded\n")
     
@@ -143,7 +242,7 @@ with app.app_context():
         injured_players = []
         for player in players:
             player_info = player.select('td')[4].text
-            if player.select('td')[3].text=='Out' and "is expected to be cleared" not in player_info and "will play" not in player_info:
+            if player.select('td')[3].text=='Out' and "is expected to be cleared" not in player_info and "will play" not in player_info and "plans to play" not in player_info:
                 injured_players.append(player.select('td')[0].text)
                 
         injured_list[team_name] = injured_players
@@ -502,7 +601,8 @@ with app.app_context():
     high_value_teasers = []
     low_value_teasers = []
     games_in_a_row = []
-
+    weekday_games = []
+    counter = 0
 
     for player_and_odds in new_odds_dict:
 
@@ -521,7 +621,7 @@ with app.app_context():
             minute_median = median([game.minutes for game in current_player.games[-25:]])
 
             games_to_use = [game for game in current_player.games if minute_median*.55 <= game.minutes <= minute_median*1.55]
-            
+        
 
 
             last_game = games_to_use[-1]
@@ -708,7 +808,7 @@ with app.app_context():
                     minutes_list = [game.minutes for game in latest_games]
                     minutes = mean(minutes_list)
                     
-                    games_vs_opponent = [game for game in games if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
+                    games_vs_opponent = [game for game in games_to_use if (game.game.home==other_team or game.game.visitor==other_team)][-4:]
 
                             
                 
@@ -905,7 +1005,22 @@ with app.app_context():
                     trb_modifier = round(mean(trb_modifier_array),2)
                     points_modifier = round(mean(points_modifier_array),2)
 
+                    todays_weekday = current_date.weekday()
 
+                    games_on_specific_day = [game for game in games_to_use if game.game.date.weekday()==todays_weekday]
+                    latest_games_on_day = games_on_specific_day[-4:]
+
+                    if len(games_on_specific_day)>0:
+
+                        if "points" in player_and_odds[1]:
+                            weekday_points_modifier = round(mean([game.points-player_and_odds[1]["points"] for game in games_on_specific_day]),2)
+                            weekday_games.append({"name":player_name,"prop":"points","value":weekday_points_modifier,"line":player_and_odds[1]["points"]})
+                        if "assists" in player_and_odds[1]:
+                            weekday_assists_modifier = round(mean([game.assists-player_and_odds[1]["assists"] for game in games_on_specific_day]),2)
+                            weekday_games.append({"name":player_name,"prop":"assists","value":weekday_assists_modifier,"line":player_and_odds[1]["assists"]})
+                        if "rebounds" in player_and_odds[1]:
+                            weekday_rebounds_modifier = round(mean([game.trb-player_and_odds[1]["rebounds"] for game in games_on_specific_day]),2)
+                            weekday_games.append({"name":player_name,"prop":"rebounds","value":weekday_rebounds_modifier,"line":player_and_odds[1]["rebounds"]})
 
 
 
@@ -932,10 +1047,9 @@ with app.app_context():
 
                     uniq_game_list = list(new_game_list)
 
-                    
-
 
                     uniq_game_list = [game for game in uniq_game_list]
+
 
                     assists_consistency = 0
                     points_consistency = 0
@@ -1351,8 +1465,6 @@ with app.app_context():
                 if "rebounds" in player_and_odds[1] and trb_predict > player_and_odds[1]["rebounds"]:
                     consistency.append({"name":player_name,"stat":"trb","value":round(trb_consistency,2),"line":player_and_odds[1]["rebounds"]}) 
 
-
-
     
 
     sorted_consistency = sorted(consistency,key=itemgetter('value'))
@@ -1374,6 +1486,9 @@ with app.app_context():
     sorted_by_games_straight = sorted(games_in_a_row,key=itemgetter('games_straight'))[-20:]
     sorted_by_games_straight.reverse()
     sorted_by_games_straight = [item for item in sorted_by_games_straight if item["games_straight"]>4]
+
+    weekday_games_sorted = sorted(weekday_games,key=itemgetter("value"))[-20:]
+    weekday_games_sorted.reverse()
         
     for item in sorted_bets:
         name = item["name"]
@@ -1423,6 +1538,25 @@ with app.app_context():
         proj = item["proj"]
         data_points = item["data_points"]
         games_straight = item["games_straight"]
+
+        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="high_value",category_value==(index+1))
+        if len(player_data_list) > 0:
+            player_data = player_data_list.first()
+            player_data.name = name
+            player_data.prop = prop
+            player_data.line = teaser
+        else:
+            player = FinalBet(
+                category = "high_value",
+                category_value = index+1,
+                date = current_date,
+                name = name,
+                prop = prop,
+                line = teaser
+            )
+            db.session.add(player)
+        db.session.commit()
+
         print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
     print("\nLow value teasers\n")
@@ -1436,6 +1570,25 @@ with app.app_context():
         proj = item["proj"]
         data_points = item["data_points"]
         games_straight = item["games_straight"]
+
+        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="low_value",category_value==(index+1))
+        if len(player_data_list) > 0:
+            player_data = player_data_list.first()
+            player_data.name = name
+            player_data.prop = prop
+            player_data.line = teaser
+        else:
+            player = FinalBet(
+                category = "low_value",
+                category_value = index+1,
+                date = current_date,
+                name = name,
+                prop = prop,
+                line = teaser
+            )
+            db.session.add(player)
+        db.session.commit()
+
         print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
 
@@ -1450,6 +1603,25 @@ with app.app_context():
         proj = item["proj"]
         data_points = item["data_points"]
         games_straight = item["games_straight"]
+
+        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="games_in_a_row",category_value==(index+1))
+        if len(player_data_list) > 0:
+            player_data = player_data_list.first()
+            player_data.name = name
+            player_data.prop = prop
+            player_data.line = teaser
+        else:
+            player = FinalBet(
+                category = "games_in_a_row",
+                category_value = index+1,
+                date = current_date,
+                name = name,
+                prop = prop,
+                line = teaser
+            )
+            db.session.add(player)
+        db.session.commit()
+
         print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight})")
 
 
@@ -1466,8 +1638,36 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
         total_value = item["total_value"]
-        print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight}, Total Value:{total_value})")
 
+        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="total_value",category_value==(index+1))
+        if len(player_data_list) > 0:
+            player_data = player_data_list.first()
+            player_data.name = name
+            player_data.prop = prop
+            player_data.line = teaser
+        else:
+            player = FinalBet(
+                category = "total_value",
+                category_value = index+1,
+                date = current_date,
+                name = name,
+                prop = prop,
+                line = teaser
+            )
+            db.session.add(player)
+        db.session.commit()
+
+        print(f"{index+1}: {name} {teaser} {prop}: {value} (Modifier:{modifier}, Projection:{proj}, Data Points:{data_points}, Games Straight:{games_straight}, Total Value:{total_value})")
+        
+        
+    print("\nWeekday Comparisons\n")
+
+    for index, item in enumerate(weekday_games_sorted):
+        name = item["name"]
+        prop = item["prop"]
+        value = item["value"]
+        line = item["line"]
+        print(f"{index+1}: {name} {line} {prop}: {value}")
 
 
     print(f"\nDouble Doubles: {double_doubles}")
@@ -1484,3 +1684,11 @@ with app.app_context():
 
             
 
+
+
+# category (high teaser, low teaser, games in a row, total value)
+# category value (1,2,3,etc...)
+# date
+# player name
+# prop (trb, points, assists)
+# line
