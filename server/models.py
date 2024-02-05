@@ -67,7 +67,7 @@ class FinalBet(db.Model, SerializerMixin):
     
 
     def __repr__(self):
-        return f'<{self.category} {self.category_value}: {self.name} {self.line} {self.prop}>'
+        return f'<{self.category} {self.category_value} ({self.date}): {self.name} {self.line} {self.prop}>'
 
 
 class PlayerGame(db.Model, SerializerMixin):

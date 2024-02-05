@@ -3,7 +3,7 @@ from flask import Flask, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-from models import db, Game, Player, PlayerGame
+from models import db, Game, Player, PlayerGame, FinalBet
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'

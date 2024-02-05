@@ -58,7 +58,7 @@ with app.app_context():
         # for index, item in enumerate(high_value):
         #     name = item["name"]
         #     prop = item["prop"]
-        #     teaser = item["teaser"]
+        #     teaser = item["line"]
         #     if prop=="rebounds":
         #         new_prop="trb"
         #     else:
@@ -81,7 +81,7 @@ with app.app_context():
         # for index, item in enumerate(low_value):
         #     name = item["name"]
         #     prop = item["prop"]
-        #     teaser = item["teaser"]
+        #     teaser = item["line"]
         #     if prop=="rebounds":
         #         new_prop="trb"
         #     else:
@@ -104,7 +104,7 @@ with app.app_context():
         # for index, item in enumerate(total_value):
         #     name = item["name"]
         #     prop = item["prop"]
-        #     teaser = item["teaser"]
+        #     teaser = item["line"]
         #     if prop=="rebounds":
         #         new_prop="trb"
         #     else:
@@ -1539,7 +1539,7 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
 
-        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="high_value",category_value==(index+1))
+        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="high_value",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
             player_data = player_data_list.first()
             player_data.name = name
@@ -1571,7 +1571,7 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
 
-        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="low_value",category_value==(index+1))
+        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="low_value",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
             player_data = player_data_list.first()
             player_data.name = name
@@ -1604,7 +1604,7 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
 
-        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="games_in_a_row",category_value==(index+1))
+        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="games_in_a_row",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
             player_data = player_data_list.first()
             player_data.name = name
@@ -1639,7 +1639,7 @@ with app.app_context():
         games_straight = item["games_straight"]
         total_value = item["total_value"]
 
-        player_data_list = Player.query.filter(Player.date==current_date,Player.category=="total_value",category_value==(index+1))
+        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="total_value",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
             player_data = player_data_list.first()
             player_data.name = name
