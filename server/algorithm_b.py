@@ -22,7 +22,8 @@ with app.app_context():
     format_time = datetime.strptime(time_string,"%I:%M:%S%p").time()
 
     #set current date to todays date and run the algorithm to see projections
-    current_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+    full_date = datetime.strptime(date_string, "%A, %B %d, %Y")
+    current_date = full_date.date()
     # current_date = datetime(2023,11,27).date()
 
 
@@ -46,106 +47,127 @@ with app.app_context():
         year_of_yesterday = yesterday.year
     year_of_yesterday_string = str(year_of_yesterday)
 
+
     if most_recent_game_date != yesterday:
         scrape_a_day(yesterday,month_of_yesterday,year_of_yesterday)
-        # yesterdays_bets = FinalBets.query.filter(FinalBet.date==yesterday).all()
-        # high_value = sorted([bet for bet in yesterdays_bets if bet.category=="high_value"],key=itemgetter('category_value'))
-        # low_value = sorted([bet for bet in yesterdays_bets if bet.category=="low_value"],key=itemgetter('category_value'))
-        # total_value = sorted([bet for bet in yesterdays_bets if bet.category=="total_value"],key=itemgetter('category_value'))
-        # games_in_a_row = sorted([bet for bet in yesterdays_bets if bet.category=="games_in_a_row"],key=itemgetter('category_value'))
+        yesterdays_bets = FinalBet.query.filter(FinalBet.date==full_date-timedelta(1)).all()
+        high_value = [bet for bet in yesterdays_bets if bet.category=="high_value"]
+        low_value = [bet for bet in yesterdays_bets if bet.category=="low_value"]
+        total_value = [bet for bet in yesterdays_bets if bet.category=="total_value"]
+        games_in_a_row = [bet for bet in yesterdays_bets if bet.category=="games_in_a_row"]
 
-        # print("\nHigh value teasers\n")
-        # for index, item in enumerate(high_value):
-        #     name = item["name"]
-        #     prop = item["prop"]
-        #     teaser = item["line"]
-        #     if prop=="rebounds":
-        #         new_prop="trb"
-        #     else:
-        #         new_prop=prop
-        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
-        #     if len(players_game_list) > 0:
-        #         player_who_played = players_game_list.first()
-        #         actual_score = player_who_played.new_prop
-        #         if actual_score > teaser:
-        #             did_they_do_it = "Yes"
-        #         else:
-        #             did_they_do_it = "No"
-        #     else:
-        #         did_they_do_it = "Didn't play"
-        #         actual_score = "NA"
+        print("\nHigh value teasers\n")
+        for item in high_value:
+            name = item.name
+            prop = item.prop
+            teaser = item.line
+            index = item.category_value
+            player_who_played = Player.query.filter(Player.name==name).first()
+            yesterdays_game = player_who_played.games[-1]
+            if yesterdays_game.game.date.date()==(full_date-timedelta(1)).date():
+                if prop=="rebounds":
+                    actual_score = yesterdays_game.trb
+                elif prop=="points":
+                    actual_score = yesterdays_game.points
+                else:
+                    actual_score = yesterdays_game.assists
+                if actual_score >= teaser:
+                    did_they_do_it = "✅"
+                else:
+                    did_they_do_it = "❌"
+            else:
+                did_they_do_it = "Didn't play"
+                actual_score = "NA"
 
-        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+            string_output = f"{index}: {name} {teaser} {prop} Actual: {actual_score}"
+            string_output = string_output.ljust(55,'.')
 
-        # print("\nLow value teasers\n")
-        # for index, item in enumerate(low_value):
-        #     name = item["name"]
-        #     prop = item["prop"]
-        #     teaser = item["line"]
-        #     if prop=="rebounds":
-        #         new_prop="trb"
-        #     else:
-        #         new_prop=prop
-        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
-        #     if len(players_game_list) > 0:
-        #         player_who_played = players_game_list.first()
-        #         actual_score = player_who_played.new_prop
-        #         if actual_score > teaser:
-        #             did_they_do_it = "Yes"
-        #         else:
-        #             did_they_do_it = "No"
-        #     else:
-        #         did_they_do_it = "Didn't play"
-        #         actual_score = "NA"
+            print(f"{string_output} {did_they_do_it}")
 
-        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+        print("\nLow value teasers\n")
+        for item in low_value:
+            name = item.name
+            prop = item.prop
+            teaser = item.line
+            index = item.category_value
+            player_who_played = Player.query.filter(Player.name==name).first()
+            yesterdays_game = player_who_played.games[-1]
+            if yesterdays_game.game.date.date()==(full_date-timedelta(1)).date():
+                if prop=="rebounds":
+                    actual_score = yesterdays_game.trb
+                elif prop=="points":
+                    actual_score = yesterdays_game.points
+                else:
+                    actual_score = yesterdays_game.assists
+                if actual_score >= teaser:
+                    did_they_do_it = "✅"
+                else:
+                    did_they_do_it = "❌"
+            else:
+                did_they_do_it = "Didn't play"
+                actual_score = "NA"
 
-        # print("\nTotal value\n")
-        # for index, item in enumerate(total_value):
-        #     name = item["name"]
-        #     prop = item["prop"]
-        #     teaser = item["line"]
-        #     if prop=="rebounds":
-        #         new_prop="trb"
-        #     else:
-        #         new_prop=prop
-        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
-        #     if len(players_game_list) > 0:
-        #         player_who_played = players_game_list.first()
-        #         actual_score = player_who_played.new_prop
-        #         if actual_score > teaser:
-        #             did_they_do_it = "Yes"
-        #         else:
-        #             did_they_do_it = "No"
-        #     else:
-        #         did_they_do_it = "Didn't play"
-        #         actual_score = "NA"
+            string_output = f"{index}: {name} {teaser} {prop} Actual: {actual_score}"
+            string_output = string_output.ljust(55,'.')
 
-        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+            print(f"{string_output} {did_they_do_it}")
+
+        print("\nTotal value\n")
+        for item in total_value:
+            name = item.name
+            prop = item.prop
+            teaser = item.line
+            index = item.category_value
+            player_who_played = Player.query.filter(Player.name==name).first()
+            yesterdays_game = player_who_played.games[-1]
+            if yesterdays_game.game.date.date()==(full_date-timedelta(1)).date():
+                if prop=="rebounds":
+                    actual_score = yesterdays_game.trb
+                elif prop=="points":
+                    actual_score = yesterdays_game.points
+                else:
+                    actual_score = yesterdays_game.assists
+                if actual_score >= teaser:
+                    did_they_do_it = "✅"
+                else:
+                    did_they_do_it = "❌"
+            else:
+                did_they_do_it = "Didn't play"
+                actual_score = "NA"
+
+            string_output = f"{index}: {name} {teaser} {prop} Actual: {actual_score}"
+            string_output = string_output.ljust(55,'.')
+
+            print(f"{string_output} {did_they_do_it}")
 
 
-        # print("\nGames in a Row\n")
-        # for index, item in enumerate(games_in_a_row):
-        #     name = item["name"]
-        #     prop = item["prop"]
-        #     teaser = item["teaser"]
-        #     if prop=="rebounds":
-        #         new_prop="trb"
-        #     else:
-        #         new_prop=prop
-        #     players_game_list = PlayerGame.query.filter(PlayerGame.game.date==yesterday,PlayerGame.player.name==name).all()
-        #     if len(players_game_list) > 0:
-        #         player_who_played = players_game_list.first()
-        #         actual_score = player_who_played.new_prop
-        #         if actual_score > teaser:
-        #             did_they_do_it = "Yes"
-        #         else:
-        #             did_they_do_it = "No"
-        #     else:
-        #         did_they_do_it = "Didn't play"
-        #         actual_score = "NA"
+        print("\nGames in a Row\n")
+        for item in games_in_a_row:
+            name = item.name
+            prop = item.prop
+            teaser = item.line
+            index = item.category_value
+            player_who_played = Player.query.filter(Player.name==name).first()
+            yesterdays_game = player_who_played.games[-1]
+            if yesterdays_game.game.date.date()==(full_date-timedelta(1)).date():
+                if prop=="rebounds":
+                    actual_score = yesterdays_game.trb
+                elif prop=="points":
+                    actual_score = yesterdays_game.points
+                else:
+                    actual_score = yesterdays_game.assists
+                if actual_score >= teaser:
+                    did_they_do_it = "✅"
+                else:
+                    did_they_do_it = "❌"
+            else:
+                did_they_do_it = "Didn't play"
+                actual_score = "NA"
 
-        #     print(f"{index+1}: {name} {teaser} {prop} Actual: {actual_score}.......{did_they_do_it}")
+        string_output = f"{index}: {name} {teaser} {prop} Actual: {actual_score}"
+        string_output = string_output.ljust(55,'.')
+
+        print(f"{string_output} {did_they_do_it}")
 
     else:
         print("All games have been downloaded\n")
@@ -1527,6 +1549,7 @@ with app.app_context():
         line = item["line"]
         print(f"{name} {line} {stat}: {value}")
 
+
     print("\nHigh value teasers\n")
 
     for index, item in enumerate(sorted_high_value_teasers):
@@ -1539,9 +1562,10 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
 
-        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="high_value",FinalBet.category_value==(index+1)).all()
+        player_data_list = FinalBet.query.filter(FinalBet.date==full_date,FinalBet.category=="high_value",FinalBet.category_value==(index+1)).all()
+
         if len(player_data_list) > 0:
-            player_data = player_data_list.first()
+            player_data = player_data_list[0]
             player_data.name = name
             player_data.prop = prop
             player_data.line = teaser
@@ -1549,7 +1573,7 @@ with app.app_context():
             player = FinalBet(
                 category = "high_value",
                 category_value = index+1,
-                date = current_date,
+                date = full_date,
                 name = name,
                 prop = prop,
                 line = teaser
@@ -1571,9 +1595,9 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
 
-        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="low_value",FinalBet.category_value==(index+1)).all()
+        player_data_list = FinalBet.query.filter(FinalBet.date==full_date,FinalBet.category=="low_value",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
-            player_data = player_data_list.first()
+            player_data = player_data_list[0]
             player_data.name = name
             player_data.prop = prop
             player_data.line = teaser
@@ -1581,7 +1605,7 @@ with app.app_context():
             player = FinalBet(
                 category = "low_value",
                 category_value = index+1,
-                date = current_date,
+                date = full_date,
                 name = name,
                 prop = prop,
                 line = teaser
@@ -1604,9 +1628,9 @@ with app.app_context():
         data_points = item["data_points"]
         games_straight = item["games_straight"]
 
-        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="games_in_a_row",FinalBet.category_value==(index+1)).all()
+        player_data_list = FinalBet.query.filter(FinalBet.date==full_date,FinalBet.category=="games_in_a_row",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
-            player_data = player_data_list.first()
+            player_data = player_data_list[0]
             player_data.name = name
             player_data.prop = prop
             player_data.line = teaser
@@ -1614,7 +1638,7 @@ with app.app_context():
             player = FinalBet(
                 category = "games_in_a_row",
                 category_value = index+1,
-                date = current_date,
+                date = full_date,
                 name = name,
                 prop = prop,
                 line = teaser
@@ -1639,9 +1663,9 @@ with app.app_context():
         games_straight = item["games_straight"]
         total_value = item["total_value"]
 
-        player_data_list = FinalBet.query.filter(FinalBet.date==current_date,FinalBet.category=="total_value",FinalBet.category_value==(index+1)).all()
+        player_data_list = FinalBet.query.filter(FinalBet.date==full_date,FinalBet.category=="total_value",FinalBet.category_value==(index+1)).all()
         if len(player_data_list) > 0:
-            player_data = player_data_list.first()
+            player_data = player_data_list[0]
             player_data.name = name
             player_data.prop = prop
             player_data.line = teaser
@@ -1649,7 +1673,7 @@ with app.app_context():
             player = FinalBet(
                 category = "total_value",
                 category_value = index+1,
-                date = current_date,
+                date = full_date,
                 name = name,
                 prop = prop,
                 line = teaser
@@ -1681,6 +1705,7 @@ with app.app_context():
 
     print("\nAlgo B")
     print(time_string)
+    print('✅')
 
             
 
